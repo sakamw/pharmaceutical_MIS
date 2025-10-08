@@ -105,7 +105,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
@@ -142,4 +142,21 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": True,
     # Try other Bootswatch themes: flatly, darkly, cyborg, litera, etc.
     "theme": "flatly",
+}
+
+# Optional UI tweaks (colors, buttons, navbar)
+JAZZMIN_UI_TWEAKS = {
+    "navbar": "navbar-dark",
+    "navbar_fixed": True,
+    "sidebar_fixed": True,
+    "theme": "flatly",
+    "accent": "primary",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
 }

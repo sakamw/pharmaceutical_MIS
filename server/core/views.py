@@ -19,4 +19,10 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
+class UserCountView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        return Response({"count": User.objects.count()})
+
 

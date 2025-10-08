@@ -1,78 +1,33 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { StatCard } from "@/components/StatCard";
 import { AlertCard } from "@/components/AlertCard";
 import { Package, DollarSign, AlertTriangle, TrendingUp, Pill, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
-  const { data: medicines } = useQuery({
-    queryKey: ["medicines"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("medicines")
-        .select("*");
-      if (error) throw error;
-      return data || [];
-    },
+  const { data: summary } = useQuery({
+    queryKey: ["reports-summary"],
+    queryFn: async () => api.get<any>("/api/reports/summary/"),
   });
 
-  const { data: stockBatches } = useQuery({
-    queryKey: ["stock-batches"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stock_batches")
-        .select("*, medicines(name)");
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const totalMedicines = summary?.total_medicines ?? undefined; // optional if added later
+  const totalStockValue = summary?.total_stock_value || 0;
+  const monthlySalesQty = summary?.monthly_sales_qty || 0;
+  const belowReorder = summary?.below_reorder || 0;
+  const expiringSoon = summary?.expiring_soon || 0;
+  const expired = summary?.expired || 0;
+  const topFastMoving = (summary?.top_fast_moving || []).map((x: any) => ({
+    name: x.medicine__name,
+    quantity: x.total,
+  }));
 
-  const { data: sales } = useQuery({
-    queryKey: ["recent-sales"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sales")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(7);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Calculate statistics
-  const totalMedicines = medicines?.length || 0;
-  const totalStock = stockBatches?.reduce((sum, batch) => sum + batch.quantity, 0) || 0;
-  const stockValue = stockBatches?.reduce((sum, batch) => sum + (batch.quantity * batch.purchase_price), 0) || 0;
-  const totalSales = sales?.reduce((sum, sale) => sum + parseFloat(sale.total_amount.toString()), 0) || 0;
-
-  // Low stock items
-  const lowStockItems = medicines?.filter(med => {
-    const totalQty = stockBatches?.filter(b => b.medicine_id === med.id)
-      .reduce((sum, b) => sum + b.quantity, 0) || 0;
-    return totalQty < med.reorder_level;
-  }) || [];
-
-  // Expired or expiring soon (within 30 days)
-  const expiringBatches = stockBatches?.filter(batch => {
-    const expiryDate = new Date(batch.expiry_date);
-    const today = new Date();
-    const daysUntilExpiry = Math.floor((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
-  }) || [];
-
-  const expiredBatches = stockBatches?.filter(batch => {
-    const expiryDate = new Date(batch.expiry_date);
-    return expiryDate < new Date();
-  }) || [];
-
-  // Chart data
-  const salesChartData = sales?.map(sale => ({
-    date: new Date(sale.created_at).toLocaleDateString(),
-    amount: parseFloat(sale.total_amount.toString())
-  })).reverse() || [];
+  const alerts = [
+    { show: belowReorder > 0, title: "Low Stock Alert", description: `${belowReorder} medicine(s) below reorder level` },
+    { show: expiringSoon > 0, title: "Expiring Soon", description: `${expiringSoon} batch(es) expiring within 30 days` },
+    { show: expired > 0, title: "Expired Stock", description: `${expired} batch(es) have expired`, destructive: true },
+  ];
 
   return (
     <div className="space-y-6">
@@ -86,106 +41,60 @@ const Dashboard = () => {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Medicines"
-          value={totalMedicines}
-          icon={Pill}
-          trend={{ value: "12% from last month", isPositive: true }}
-        />
-        <StatCard
-          title="Total Stock"
-          value={totalStock.toLocaleString()}
-          icon={Package}
-          trend={{ value: "8% from last month", isPositive: true }}
-        />
-        <StatCard
           title="Stock Value"
-          value={`$${stockValue.toLocaleString()}`}
+          value={`$${totalStockValue.toLocaleString()}`}
+          icon={Pill}
+        />
+        <StatCard
+          title="Monthly Sales (qty)"
+          value={monthlySalesQty.toLocaleString()}
+          icon={Package}
+        />
+        <StatCard
+          title="Expiring Soon"
+          value={expiringSoon}
           icon={DollarSign}
         />
         <StatCard
-          title="Recent Sales"
-          value={`$${totalSales.toFixed(2)}`}
+          title="Expired"
+          value={expired}
           icon={ShoppingCart}
-          trend={{ value: "15% from last week", isPositive: true }}
         />
       </div>
 
       {/* Alerts Section */}
-      {(lowStockItems.length > 0 || expiringBatches.length > 0 || expiredBatches.length > 0) && (
+      {alerts.some(a => a.show) && (
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">Alerts & Notifications</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {lowStockItems.length > 0 && (
+            {alerts.map((a, idx) => a.show ? (
               <AlertCard
-                title="Low Stock Alert"
-                description={`${lowStockItems.length} medicine(s) below reorder level`}
+                key={idx}
+                title={a.title}
+                description={a.description}
                 icon={AlertTriangle}
-                variant="destructive"
+                variant={a.destructive ? "destructive" : undefined}
               />
-            )}
-            {expiringBatches.length > 0 && (
-              <AlertCard
-                title="Expiring Soon"
-                description={`${expiringBatches.length} batch(es) expiring within 30 days`}
-                icon={AlertTriangle}
-              />
-            )}
-            {expiredBatches.length > 0 && (
-              <AlertCard
-                title="Expired Stock"
-                description={`${expiredBatches.length} batch(es) have expired`}
-                icon={AlertTriangle}
-                variant="destructive"
-              />
-            )}
+            ) : null)}
           </div>
         </div>
       )}
 
-      {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Charts: Top fast-moving items */}
+      <div className="grid gap-4 md:grid-cols-1">
         <Card>
           <CardHeader>
-            <CardTitle>Sales Trend</CardTitle>
-            <CardDescription>Last 7 transactions</CardDescription>
+            <CardTitle>Top Fast Moving (Last 30 days)</CardTitle>
+            <CardDescription>Quantity sold by medicine</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={salesChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Stock Overview</CardTitle>
-            <CardDescription>Top 5 medicines by quantity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart 
-                data={medicines?.slice(0, 5).map(med => ({
-                  name: med.name.substring(0, 10),
-                  quantity: stockBatches?.filter(b => b.medicine_id === med.id)
-                    .reduce((sum, b) => sum + b.quantity, 0) || 0
-                }))}
-              >
+              <BarChart data={topFastMoving}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="quantity" fill="hsl(var(--accent))" />
+                <Bar dataKey="quantity" fill="hsl(var(--primary))" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
