@@ -1,0 +1,76 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { useEffect, useState } from "react";
+import { me, MeResponse } from "@/lib/auth";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import Medicines from "./pages/Medicines";
+import Stock from "./pages/Stock";
+import Sales from "./pages/Sales";
+import Suppliers from "./pages/Suppliers";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+const App = () => {
+  const [user, setUser] = useState<MeResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    me().then(setUser).catch(() => setUser(null)).finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            {user ? (
+              <Route element={
+                <SidebarProvider>
+                  <div className="flex min-h-screen w-full">
+                    <AppSidebar />
+                    <div className="flex-1 flex flex-col">
+                      <DashboardHeader user={user} />
+                      <main className="flex-1 p-6 bg-muted/30">
+                        <Routes>
+                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/medicines" element={<Medicines />} />
+                          <Route path="/stock" element={<Stock />} />
+                          <Route path="/sales" element={<Sales />} />
+                          <Route path="/suppliers" element={<Suppliers />} />
+                          <Route path="/reports" element={<Reports />} />
+                          <Route path="/settings" element={<Settings />} />
+                        </Routes>
+                      </main>
+                    </div>
+                  </div>
+                </SidebarProvider>
+              }>
+                <Route path="*" element={<></>} />
+              </Route>
+            ) : loading ? (
+              <Route path="*" element={<div />} />
+            ) : (
+              <Route path="*" element={<Auth />} />
+            )}
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;
