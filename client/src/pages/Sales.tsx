@@ -62,12 +62,14 @@ const Sales = () => {
   const createSaleMutation = useMutation({
     mutationFn: async () => {
       // Post one Sale per cart item to the Django API.
+      const today = new Date().toISOString().split('T')[0];
       for (const item of cart) {
         await api.post("/api/sales/", {
-          medicine: item.medicine_id,
-          stock: item.batch_id,
+          medicine: parseInt(item.medicine_id),
+          stock: parseInt(item.batch_id),
           quantity_sold: item.quantity,
           sale_price: item.unit_price,
+          sale_date: today,
         });
       }
     },
@@ -89,10 +91,13 @@ const Sales = () => {
       return;
     }
 
-    const medicine = medicines?.find((m) => m.id === selectedMedicine);
-    const batch = batches?.find((b) => b.id === selectedBatch);
+    const medicine = medicines?.find((m) => m.id.toString() === selectedMedicine);
+    const batch = batches?.find((b) => b.id.toString() === selectedBatch);
 
-    if (!medicine || !batch) return;
+    if (!medicine || !batch) {
+      toast.error("Invalid medicine or batch selection");
+      return;
+    }
 
     if (parseInt(quantity) > batch.quantity) {
       toast.error("Quantity exceeds available stock");
@@ -102,9 +107,9 @@ const Sales = () => {
     setCart([
       ...cart,
       {
-        medicine_id: medicine.id,
+        medicine_id: medicine.id.toString(),
         medicine_name: medicine.name,
-        batch_id: batch.id,
+        batch_id: batch.id.toString(),
         quantity: parseInt(quantity),
         unit_price: parseFloat(medicine.unit_price.toString()),
       },
@@ -154,7 +159,7 @@ const Sales = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {medicines?.map((med) => (
-                        <SelectItem key={med.id} value={med.id}>
+                        <SelectItem key={med.id} value={med.id.toString()}>
                           {med.name}
                         </SelectItem>
                       ))}
@@ -171,7 +176,7 @@ const Sales = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {batches?.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
+                        <SelectItem key={batch.id} value={batch.id.toString()}>
                           {batch.batch_number} (Qty: {batch.quantity})
                         </SelectItem>
                       ))}
