@@ -1,12 +1,34 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Search, Edit, Trash2, Loader2, Star } from "lucide-react";
@@ -121,14 +143,17 @@ const Suppliers = () => {
   );
 
   const renderRating = (rating: number | null) => {
-    if (!rating) return <span className="text-muted-foreground">Not rated</span>;
+    if (!rating)
+      return <span className="text-muted-foreground">Not rated</span>;
     return (
       <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={`h-4 w-4 ${
-              i < Math.round(rating) ? "fill-warning text-warning" : "text-muted-foreground"
+              i < Math.round(rating)
+                ? "fill-warning text-warning"
+                : "text-muted-foreground"
             }`}
           />
         ))}
@@ -142,7 +167,9 @@ const Suppliers = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Suppliers</h2>
-          <p className="text-muted-foreground">Manage supplier information and relationships</p>
+          <p className="text-muted-foreground">
+            Manage supplier information and relationships
+          </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -168,7 +195,9 @@ const Suppliers = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -177,7 +206,12 @@ const Suppliers = () => {
                   <Input
                     id="contact_person"
                     value={formData.contact_person}
-                    onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        contact_person: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -186,7 +220,9 @@ const Suppliers = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -194,11 +230,15 @@ const Suppliers = () => {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="performance_rating">Performance Rating (0-5)</Label>
+                  <Label htmlFor="performance_rating">
+                    Performance Rating (0-5)
+                  </Label>
                   <Input
                     id="performance_rating"
                     type="number"
@@ -206,7 +246,12 @@ const Suppliers = () => {
                     min="0"
                     max="5"
                     value={formData.performance_rating}
-                    onChange={(e) => setFormData({ ...formData, performance_rating: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        performance_rating: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -215,15 +260,26 @@ const Suppliers = () => {
                 <Textarea
                   id="address"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   rows={3}
                 />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
+                >
                   {(createMutation.isPending || updateMutation.isPending) && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
@@ -271,11 +327,15 @@ const Suppliers = () => {
                 <TableBody>
                   {filteredSuppliers?.map((supplier) => (
                     <TableRow key={supplier.id}>
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {supplier.name}
+                      </TableCell>
                       <TableCell>{supplier.contact_person || "N/A"}</TableCell>
                       <TableCell>{supplier.email || "N/A"}</TableCell>
                       <TableCell>{supplier.phone || "N/A"}</TableCell>
-                      <TableCell>{renderRating(supplier.performance_rating)}</TableCell>
+                      <TableCell>
+                        {renderRating(supplier.performance_rating)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -289,7 +349,11 @@ const Suppliers = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (confirm("Are you sure you want to delete this supplier?")) {
+                              if (
+                                confirm(
+                                  "Are you sure you want to delete this supplier?"
+                                )
+                              ) {
                                 deleteMutation.mutate(supplier.id);
                               }
                             }}

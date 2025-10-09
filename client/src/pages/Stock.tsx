@@ -1,9 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -22,12 +36,22 @@ const Stock = () => {
   const getExpiryStatus = (expiryDate: string) => {
     const expiry = new Date(expiryDate);
     const today = new Date();
-    const daysUntilExpiry = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysUntilExpiry = Math.floor(
+      (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     if (daysUntilExpiry < 0) {
-      return { status: "Expired", variant: "destructive" as const, icon: AlertTriangle };
+      return {
+        status: "Expired",
+        variant: "destructive" as const,
+        icon: AlertTriangle,
+      };
     } else if (daysUntilExpiry <= 30) {
-      return { status: "Expiring Soon", variant: "default" as const, icon: AlertTriangle };
+      return {
+        status: "Expiring Soon",
+        variant: "default" as const,
+        icon: AlertTriangle,
+      };
     } else {
       return { status: "Good", variant: "outline" as const, icon: CheckCircle };
     }
@@ -44,7 +68,9 @@ const Stock = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Stock Management</h2>
-        <p className="text-muted-foreground">Monitor inventory levels and expiry dates</p>
+        <p className="text-muted-foreground">
+          Monitor inventory levels and expiry dates
+        </p>
       </div>
 
       <Card>
@@ -88,19 +114,29 @@ const Stock = () => {
                     const StatusIcon = expiryInfo.icon;
                     return (
                       <TableRow key={batch.id}>
-                        <TableCell className="font-medium">{batch.medicine_name}</TableCell>
+                        <TableCell className="font-medium">
+                          {batch.medicine_name}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{batch.medicine_category}</Badge>
+                          <Badge variant="outline">
+                            {batch.medicine_category}
+                          </Badge>
                         </TableCell>
                         <TableCell>{batch.batch_number}</TableCell>
                         <TableCell>{batch.supplier_name || "N/A"}</TableCell>
                         <TableCell>
-                          <Badge variant={batch.quantity < 10 ? "destructive" : "default"}>
+                          <Badge
+                            variant={
+                              batch.quantity < 10 ? "destructive" : "default"
+                            }
+                          >
                             {batch.quantity}
                           </Badge>
                         </TableCell>
                         <TableCell>${batch.purchase_price}</TableCell>
-                        <TableCell>{format(new Date(batch.expiry_date), "MMM dd, yyyy")}</TableCell>
+                        <TableCell>
+                          {format(new Date(batch.expiry_date), "MMM dd, yyyy")}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={expiryInfo.variant} className="gap-1">
                             <StatusIcon className="h-3 w-3" />

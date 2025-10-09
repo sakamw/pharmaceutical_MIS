@@ -1,7 +1,25 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#8dd1e1"]; // palette
 
@@ -27,8 +45,12 @@ const Reports = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Reports & Analytics</h2>
-        <p className="text-muted-foreground">Overview of inventory health and sales performance</p>
+        <h2 className="text-3xl font-bold tracking-tight">
+          Reports & Analytics
+        </h2>
+        <p className="text-muted-foreground">
+          Overview of inventory health and sales performance
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -58,9 +80,19 @@ const Reports = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
-                <Pie dataKey="value" data={expiryData} cx="50%" cy="50%" outerRadius={100} label>
+                <Pie
+                  dataKey="value"
+                  data={expiryData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label
+                >
                   {expiryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -74,7 +106,9 @@ const Reports = () => {
         <Card>
           <CardHeader>
             <CardTitle>Below Reorder</CardTitle>
-            <CardDescription>Number of medicines below reorder level</CardDescription>
+            <CardDescription>
+              Number of medicines below reorder level
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{belowReorder}</div>
@@ -87,7 +121,9 @@ const Reports = () => {
             <CardDescription>Current inventory value</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">${stockValue.toLocaleString()}</div>
+            <div className="text-4xl font-bold">
+              ${stockValue.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
       </div>
