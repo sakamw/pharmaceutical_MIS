@@ -106,5 +106,5 @@ const Auth = () => {
     </div>
   );
 };
-
+//end of Authentication 
 export default Auth;
