@@ -1,4 +1,4 @@
-import { Home, Pill, Package, ShoppingCart, Users, BarChart3, Settings } from "lucide-react";
+import { Home, Pill, Package, ShoppingCart, Users, BarChart3, Settings, Cross } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -27,12 +27,12 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-2">
-          <div className="bg-sidebar-accent rounded-lg p-2">
-            <Pill className="h-6 w-6 text-sidebar-accent-foreground" />
+          <div className="bg-emerald-500 rounded-lg p-2">
+            <Cross className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-sidebar-foreground">PharmaCare</h2>
-            <p className="text-xs text-sidebar-foreground/70">Management System</p>
+            <h2 className="font-bold text-lg text-sidebar-foreground">PharmaCare MIS</h2>
+            <p className="text-xs text-sidebar-foreground/70">Pharmaceutical System</p>
           </div>
         </div>
       </SidebarHeader>

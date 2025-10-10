@@ -1,5 +1,5 @@
 from rest_framework import viewsets, filters
-from core.permissions import ReadOnlyOrStaff
+from core.permissions import IsStaffOrReadOnly
 from .models import Stock
 from .serializers import StockSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -8,7 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 class StockViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.select_related('medicine').all()
     serializer_class = StockSerializer
-    permission_classes = [ReadOnlyOrStaff]
+    permission_classes = [IsStaffOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     ordering_fields = ['expiry_date', 'quantity']
     filterset_fields = {
