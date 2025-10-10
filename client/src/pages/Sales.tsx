@@ -1,14 +1,42 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Search, Loader2, ShoppingCart, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -119,10 +147,15 @@ const Sales = () => {
     setCart(cart.filter((_, i) => i !== index));
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+  const totalAmount = cart.reduce(
+    (sum, item) => sum + item.quantity * item.unit_price,
+    0
+  );
 
   const filteredSales = sales?.filter((sale) => {
-    const hay = `${sale.medicine_name || ''} ${sale.batch_number || ''}`.toLowerCase();
+    const hay = `${sale.medicine_name || ""} ${
+      sale.batch_number || ""
+    }`.toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
   });
 
@@ -131,7 +164,9 @@ const Sales = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Sales</h2>
-          <p className="text-muted-foreground">Process sales and view transaction history</p>
+          <p className="text-muted-foreground">
+            Process sales and view transaction history
+          </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -142,13 +177,18 @@ const Sales = () => {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Point of Sale</DialogTitle>
-              <DialogDescription>Create a new sale transaction</DialogDescription>
+              <DialogDescription>
+                Create a new sale transaction
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Add Items</Label>
                 <div className="grid gap-4 md:grid-cols-4">
-                  <Select value={selectedMedicine} onValueChange={setSelectedMedicine}>
+                  <Select
+                    value={selectedMedicine}
+                    onValueChange={setSelectedMedicine}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select medicine" />
                     </SelectTrigger>
@@ -214,7 +254,9 @@ const Sales = () => {
                             <TableCell>{item.medicine_name}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>${item.unit_price}</TableCell>
-                            <TableCell>${(item.quantity * item.unit_price).toFixed(2)}</TableCell>
+                            <TableCell>
+                              ${(item.quantity * item.unit_price).toFixed(2)}
+                            </TableCell>
                             <TableCell>
                               <Button
                                 variant="ghost"
@@ -227,7 +269,10 @@ const Sales = () => {
                           </TableRow>
                         ))}
                         <TableRow>
-                          <TableCell colSpan={3} className="font-bold text-right">
+                          <TableCell
+                            colSpan={3}
+                            className="font-bold text-right"
+                          >
                             Total:
                           </TableCell>
                           <TableCell className="font-bold">
@@ -301,11 +346,17 @@ const Sales = () => {
                 <TableBody>
                   {filteredSales?.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell className="font-medium">{sale.medicine_name}</TableCell>
+                      <TableCell className="font-medium">
+                        {sale.medicine_name}
+                      </TableCell>
                       <TableCell>{sale.batch_number}</TableCell>
                       <TableCell>{sale.quantity_sold}</TableCell>
-                      <TableCell className="font-semibold">${parseFloat(sale.sale_price.toString()).toFixed(2)}</TableCell>
-                      <TableCell>{format(new Date(sale.sale_date), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="font-semibold">
+                        ${parseFloat(sale.sale_price.toString()).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(sale.sale_date), "MMM dd, yyyy")}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
