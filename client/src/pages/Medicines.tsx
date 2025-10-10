@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const Medicines = () => {
   const queryClient = useQueryClient();
+  const { canEdit } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<any>(null);
@@ -138,12 +140,13 @@ const Medicines = () => {
           <h2 className="text-3xl font-bold tracking-tight">Medicines</h2>
           <p className="text-muted-foreground">Manage your pharmacy inventory</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" /> Add Medicine
-            </Button>
-          </DialogTrigger>
+        {canEdit && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" /> Add Medicine
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -258,6 +261,7 @@ const Medicines = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -291,7 +295,7 @@ const Medicines = () => {
                     <TableHead>Dosage Form</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Reorder Level</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {canEdit && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -307,28 +311,30 @@ const Medicines = () => {
                       </TableCell>
                       <TableCell>${medicine.unit_price}</TableCell>
                       <TableCell>{medicine.reorder_level}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(medicine)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm("Are you sure you want to delete this medicine?")) {
-                                deleteMutation.mutate(medicine.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {canEdit && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(medicine)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this medicine?")) {
+                                  deleteMutation.mutate(medicine.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

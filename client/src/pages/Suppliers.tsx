@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Search, Edit, Trash2, Loader2, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const Suppliers = () => {
   const queryClient = useQueryClient();
+  const { canEdit } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
@@ -144,6 +146,7 @@ const Suppliers = () => {
           <h2 className="text-3xl font-bold tracking-tight">Suppliers</h2>
           <p className="text-muted-foreground">Manage supplier information and relationships</p>
         </div>
+        {canEdit && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
@@ -198,26 +201,17 @@ const Suppliers = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="performance_rating">Performance Rating (0-5)</Label>
+                  <Label htmlFor="reliability_rating">Reliability Rating (0-5)</Label>
                   <Input
-                    id="performance_rating"
+                    id="reliability_rating"
                     type="number"
                     step="0.1"
                     min="0"
                     max="5"
-                    value={formData.performance_rating}
-                    onChange={(e) => setFormData({ ...formData, performance_rating: e.target.value })}
+                    value={formData.reliability_rating}
+                    onChange={(e) => setFormData({ ...formData, reliability_rating: e.target.value })}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  rows={3}
-                />
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -233,6 +227,7 @@ const Suppliers = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -264,8 +259,8 @@ const Suppliers = () => {
                     <TableHead>Contact Person</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Performance</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Reliability</TableHead>
+                    {canEdit && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -275,7 +270,8 @@ const Suppliers = () => {
                       <TableCell>{supplier.contact_person || "N/A"}</TableCell>
                       <TableCell>{supplier.email || "N/A"}</TableCell>
                       <TableCell>{supplier.phone || "N/A"}</TableCell>
-                      <TableCell>{renderRating(supplier.performance_rating)}</TableCell>
+                      <TableCell>{renderRating(supplier.reliability_rating)}</TableCell>
+                      {canEdit && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -298,6 +294,7 @@ const Suppliers = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

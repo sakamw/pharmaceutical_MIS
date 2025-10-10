@@ -12,9 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Loader2, AlertTriangle, CheckCircle, Plus, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const Stock = () => {
   const queryClient = useQueryClient();
+  const { canEdit } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStock, setEditingStock] = useState<any>(null);
@@ -153,6 +155,7 @@ const Stock = () => {
           <h2 className="text-3xl font-bold tracking-tight">Stock Management</h2>
           <p className="text-muted-foreground">Monitor inventory levels and expiry dates</p>
         </div>
+        {canEdit && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
@@ -248,6 +251,7 @@ const Stock = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -283,7 +287,7 @@ const Stock = () => {
                     <TableHead>Purchase Price</TableHead>
                     <TableHead>Expiry Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {canEdit && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -311,6 +315,7 @@ const Stock = () => {
                             {expiryInfo.status}
                           </Badge>
                         </TableCell>
+                        {canEdit && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -333,6 +338,7 @@ const Stock = () => {
                             </Button>
                           </div>
                         </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

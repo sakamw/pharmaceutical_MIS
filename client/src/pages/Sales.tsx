@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Search, Loader2, ShoppingCart, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { usePermissions } from "@/hooks/use-permissions";
 
 interface CartItem {
   medicine_id: string;
@@ -23,6 +24,9 @@ interface CartItem {
 
 const Sales = () => {
   const queryClient = useQueryClient();
+  const { canEdit, user } = usePermissions();
+  // All authenticated users can make sales
+  const canMakeSales = !!user;
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -138,6 +142,7 @@ const Sales = () => {
           <h2 className="text-3xl font-bold tracking-tight">Sales</h2>
           <p className="text-muted-foreground">Process sales and view transaction history</p>
         </div>
+        {canMakeSales && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -269,6 +274,7 @@ const Sales = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
