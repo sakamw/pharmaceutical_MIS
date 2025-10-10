@@ -1,18 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, me, register } from "@/lib/auth";
+import { login, register, me } from "@/lib/auth"; // make sure register exists
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Pill, Loader2 } from "lucide-react";
 
@@ -43,12 +37,12 @@ const Auth = () => {
       setTimeout(() => {
         setAuthenticating(false);
         toast.success("Account created. You can now sign in.");
-      }, 3000);
+      }, 2000);
     } catch (err: any) {
       setTimeout(() => {
         setAuthenticating(false);
         toast.error(err.message || "Registration failed");
-      }, 3000);
+      }, 2000);
     }
   };
 
@@ -59,26 +53,20 @@ const Auth = () => {
       return;
     }
 
-    // Show authentication animation immediately
     setAuthenticating(true);
-    
     try {
       await login(username, password);
-      
-      // Keep animation for 3 seconds on success, then reload to dashboard
       setTimeout(() => {
         window.location.href = "/";
-      }, 3000);
+      }, 2000);
     } catch (err: any) {
-      // Keep animation for 3 seconds on failure, then show error
       setTimeout(() => {
         setAuthenticating(false);
         toast.error(err.message || "Login failed");
-      }, 3000);
+      }, 2000);
     }
   };
 
-  // Show authentication animation overlay
   if (authenticating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
@@ -91,17 +79,10 @@ const Auth = () => {
               </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground">Authenticating Identity</h2>
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <p>Verifying your credentials...</p>
-            </div>
-          </div>
-          <div className="flex justify-center gap-2">
-            <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-            <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-            <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+          <h2 className="text-2xl font-bold text-foreground">Authenticating Identity</h2>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <p>Verifying your credentials...</p>
           </div>
         </div>
       </div>
@@ -133,7 +114,6 @@ const Auth = () => {
                   <Input
                     id="signin-username"
                     type="text"
-                    placeholder="your-username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -161,7 +141,6 @@ const Auth = () => {
                   <Input
                     id="signup-username"
                     type="text"
-                    placeholder="your-username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -172,7 +151,6 @@ const Auth = () => {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="pharmacist@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
