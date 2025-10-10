@@ -1,0 +1,47 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="card" style="max-width: 720px;">
+  <div class="card-body">
+    <h1 class="card-title">Upload Medicine Data (CSV)</h1>
+    <p class="card-text">Upload a CSV file containing medicine and optional stock details. Columns are auto-detected. Supported columns include:
+      <code>name, category, generic_name, description, manufacturer, dosage_form, barcode, unit_price, reorder_level, supplier, batch_number, expiry_date, quantity, purchase_price</code>.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="mb-3">
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {% if form.file.help_text %}<div class="form-text">{{ form.file.help_text }}</div>{% endif %}
+        {% if form.file.errors %}
+          <div class="text-danger">{{ form.file.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="form-check mb-3">
+        {{ form.use_ai_enrichment }}
+        {{ form.use_ai_enrichment.label_tag }}
+        {% if form.use_ai_enrichment.help_text %}<div class="form-text">{{ form.use_ai_enrichment.help_text }}</div>{% endif %}
+        {% if form.use_ai_enrichment.errors %}
+          <div class="text-danger">{{ form.use_ai_enrichment.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="mt-3">
+        <a href="{% url 'admin:medicines_medicine_changelist' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Upload</button>
+      </div>
+    </form>
+
+    <hr/>
+    <h5>Tips</h5>
+    <ul>
+      <li>Ensure dates use one of: <code>YYYY-MM-DD</code>, <code>DD/MM/YYYY</code>, or <code>MM/DD/YYYY</code>.</li>
+      <li>Quantity must be a positive number to create a stock entry.</li>
+      <li>If a supplier name is provided and doesn't exist, it will be created.</li>
+      <li>Medicines are matched by <strong>name</strong> and will be updated if they already exist.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
