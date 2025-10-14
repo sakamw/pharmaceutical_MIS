@@ -5,7 +5,6 @@ import { login, register, me } from "@/lib/auth"; // make sure register exists
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-<<<<<<< HEAD
 import {
   Card,
   CardContent,
@@ -13,10 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-=======
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
->>>>>>> 0f809dc8f8866236bad185f0a4913a615752b00a
 import { toast } from "sonner";
 import { Pill, Loader2 } from "lucide-react";
 
@@ -89,7 +85,9 @@ const Auth = () => {
               </div>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Authenticating Identity</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            Authenticating Identity
+          </h2>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
             <p>Verifying your credentials...</p>
@@ -112,57 +110,6 @@ const Auth = () => {
           <CardDescription>Pharmacy Management System</CardDescription>
         </CardHeader>
         <CardContent>
-<<<<<<< HEAD
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="signin-username">Username</Label>
-              <Input
-                id="signin-username"
-                type="text"
-                placeholder="your-username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="signin-password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="signin-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="your-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-=======
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -190,7 +137,11 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={authenticating}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={authenticating}
+                >
                   Sign In
                 </Button>
               </form>
@@ -227,21 +178,19 @@ const Auth = () => {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={authenticating}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={authenticating}
+                >
                   Create Account
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
->>>>>>> 0f809dc8f8866236bad185f0a4913a615752b00a
         </CardContent>
       </Card>
     </div>
   );
 };
-<<<<<<< HEAD
-//end of Authentication
-=======
-
->>>>>>> 0f809dc8f8866236bad185f0a4913a615752b00a
 export default Auth;
