@@ -5,7 +5,13 @@ import { login, me } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
@@ -71,6 +77,7 @@ const Auth = () => {
                 <Input
                   id="signin-password"
                   type={showPassword ? "text" : "password"}
+                  placeholder="your-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -106,5 +113,5 @@ const Auth = () => {
     </div>
   );
 };
-//end of Authentication 
+//end of Authentication
 export default Auth;

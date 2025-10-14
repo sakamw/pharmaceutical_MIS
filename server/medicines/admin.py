@@ -11,6 +11,8 @@ import csv
 import io
 import os
 from decimal import Decimal
+import logging
+import re
 
 
 class MedicineUploadForm(forms.Form):
@@ -41,6 +43,8 @@ class MedicineAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path('upload/', self.admin_site.admin_view(self.upload_view), name='medicines_medicine_upload'),
+            path('delete-all/', self.admin_site.admin_view(self.delete_all_view), name='medicines_medicine_delete_all'),
+            path('enrich-missing/', self.admin_site.admin_view(self.enrich_missing_view), name='medicines_medicine_enrich_missing'),
         ]
         return custom_urls + urls
 
@@ -91,7 +95,7 @@ class MedicineAdmin(admin.ModelAdmin):
                     'current_mapping': mapping,
                 }
                 completion = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
                     messages=[
                         {"role": "system", "content": "Map CSV headers to expected keys for a pharmacy dataset. Respond with a JSON object mapping expected_key to header string if present; omit keys not confidently mapped."},
                         {"role": "user", "content": str(prompt)},
@@ -104,9 +108,9 @@ class MedicineAdmin(admin.ModelAdmin):
                 for k, v in llm_map.items():
                     if k in expected and v in headers:
                         mapping[k] = v
-            except Exception:
-                # Fail silently; heuristics may be enough
-                pass
+            except Exception as e:
+                # Log but continue; heuristics may be enough
+                logging.exception("Header mapping enrichment failed: %s", e)
 
         return mapping
 
@@ -129,7 +133,7 @@ class MedicineAdmin(admin.ModelAdmin):
             )
             user = f"Name: {name}"
             completion = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
@@ -137,8 +141,16 @@ class MedicineAdmin(admin.ModelAdmin):
                 temperature=0
             )
             import json
-            content = completion.choices[0].message.content
-            data = json.loads(content)
+            content = completion.choices[0].message.content or ""
+            # Allow code fences and extra text; extract first JSON object
+            fenced = content.strip()
+            if fenced.startswith("```"):
+                # very defensive; handle possible language fences like ```json
+                fenced = re.sub(r"^```[a-zA-Z]*\n?|```$", "", fenced).strip()
+            # Try to locate a JSON object in the text
+            m = re.search(r"\{[\s\S]*\}", fenced)
+            json_text = m.group(0) if m else fenced
+            data = json.loads(json_text)
             result = {}
             if isinstance(data, dict):
                 if 'category' in data and isinstance(data['category'], str):
@@ -158,7 +170,8 @@ class MedicineAdmin(admin.ModelAdmin):
                     except Exception:
                         pass
             return result
-        except Exception:
+        except Exception as e:
+            logging.exception("Medicine enrichment failed for '%s': %s", name, e)
             return {}
 
     @transaction.atomic
@@ -188,6 +201,9 @@ class MedicineAdmin(admin.ModelAdmin):
                     created_meds = 0
                     updated_meds = 0
                     created_stocks = 0
+                    enriched_rows = 0
+                    enrichment_skipped_no_api = False
+                    enrichment_attempted = False
 
                     for row in reader:
                         def get(key, default=""):
@@ -237,16 +253,27 @@ class MedicineAdmin(admin.ModelAdmin):
                             or med_defaults['reorder_level'] == 0
                         )
                         if need_enrich:
-                            enrich = self._ai_enrich_medicine(med_name)
-                            if enrich:
-                                if not med_defaults['category'] and enrich.get('category'):
-                                    med_defaults['category'] = enrich['category']
-                                if not med_defaults['generic_name'] and enrich.get('generic_name'):
-                                    med_defaults['generic_name'] = enrich['generic_name']
-                                if med_defaults['unit_price'] == 0 and enrich.get('unit_price') is not None:
-                                    med_defaults['unit_price'] = enrich['unit_price']
-                                if med_defaults['reorder_level'] == 0 and enrich.get('reorder_level') is not None:
-                                    med_defaults['reorder_level'] = enrich['reorder_level']
+                            if not os.getenv('OPENAI_API_KEY'):
+                                enrichment_skipped_no_api = True
+                            else:
+                                enrichment_attempted = True
+                                enrich = self._ai_enrich_medicine(med_name)
+                                if enrich:
+                                    changed = False
+                                    if not med_defaults['category'] and enrich.get('category'):
+                                        med_defaults['category'] = enrich['category']
+                                        changed = True
+                                    if not med_defaults['generic_name'] and enrich.get('generic_name'):
+                                        med_defaults['generic_name'] = enrich['generic_name']
+                                        changed = True
+                                    if med_defaults['unit_price'] == 0 and enrich.get('unit_price') is not None:
+                                        med_defaults['unit_price'] = enrich['unit_price']
+                                        changed = True
+                                    if med_defaults['reorder_level'] == 0 and enrich.get('reorder_level') is not None:
+                                        med_defaults['reorder_level'] = enrich['reorder_level']
+                                        changed = True
+                                    if changed:
+                                        enriched_rows += 1
 
                         medicine, created = Medicine.objects.update_or_create(
                             name=med_name,
@@ -300,8 +327,12 @@ class MedicineAdmin(admin.ModelAdmin):
 
                     messages.success(
                         request,
-                        f"Upload processed. Medicines created: {created_meds}, updated: {updated_meds}. Stock entries added: {created_stocks}."
+                        f"Upload processed. Medicines created: {created_meds}, updated: {updated_meds}. Stock entries added: {created_stocks}. AI-enriched rows: {enriched_rows}."
                     )
+                    if use_ai and enrichment_skipped_no_api:
+                        messages.warning(request, 'AI enrichment was requested but OPENAI_API_KEY is not configured; fields remained default. Set OPENAI_API_KEY and retry.')
+                    if use_ai and not enrichment_skipped_no_api and enrichment_attempted and enriched_rows == 0:
+                        messages.warning(request, 'AI enrichment was enabled, but no rows were enriched. Ensure the "openai" Python package is installed, the server has internet access, and your API key has access to the specified model.')
                     return redirect('admin:medicines_medicine_changelist')
                 except Exception as e:
                     messages.error(request, f"Failed to process file: {e}")
@@ -316,3 +347,95 @@ class MedicineAdmin(admin.ModelAdmin):
             'title': 'Upload Medicine Data',
         }
         return render(request, 'admin/medicines/upload.html', context)
+
+    @transaction.atomic
+    def delete_all_view(self, request):
+        """Dangerous: Deletes ALL medicines and cascades related stocks. Shows confirm page first."""
+        from django.contrib.admin.views.main import ERROR_FLAG
+        from sales.models import Sale
+        opts = self.model._meta
+        if request.method == 'POST':
+            # Permission check: user must have delete permission on Medicine
+            if not self.has_delete_permission(request):
+                messages.error(request, 'You do not have permission to delete medicines.')
+                return redirect('admin:medicines_medicine_changelist')
+            try:
+                sales_count = Sale.objects.count()
+                if sales_count > 0:
+                    messages.error(request, f"Cannot delete medicines because there are {sales_count} sales records referencing medicines/stocks. Delete sales first.")
+                    return redirect('admin:medicines_medicine_changelist')
+                count = Medicine.objects.count()
+                Medicine.objects.all().delete()
+                messages.success(request, f"Deleted ALL medicines (count: {count}). Related stock entries were also removed.")
+                return redirect('admin:medicines_medicine_changelist')
+            except Exception as e:
+                messages.error(request, f"Failed to delete all medicines: {e}")
+                return redirect('admin:medicines_medicine_changelist')
+
+        # Show counts on confirm page
+        from sales.models import Sale
+        from stock.models import Stock as StockModel
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': opts,
+            'title': 'Confirm delete ALL medicines',
+            'med_count': Medicine.objects.count(),
+            'stock_count': StockModel.objects.count(),
+            'sale_count': Sale.objects.count(),
+        }
+        return render(request, 'admin/medicines/confirm_delete_all.html', context)
+
+    @transaction.atomic
+    def enrich_missing_view(self, request):
+        """Bulk AI enrichment for all medicines with missing category/generic or zero price/reorder."""
+        from django.db.models import Q
+
+        # Identify candidates
+        candidates = Medicine.objects.filter(
+            Q(category__isnull=True) | Q(category__exact='') |
+            Q(generic_name__isnull=True) | Q(generic_name__exact='') |
+            Q(unit_price=0) |
+            Q(reorder_level=0)
+        )
+
+        if request.method == 'POST':
+            use_ai = True
+            if not os.getenv('OPENAI_API_KEY'):
+                messages.warning(request, 'OPENAI_API_KEY is not configured; cannot perform AI enrichment.')
+                return redirect('admin:medicines_medicine_changelist')
+
+            enriched = 0
+            checked = 0
+            for med in candidates.iterator():
+                checked += 1
+                need = (not med.category or not med.generic_name or med.unit_price == 0 or med.reorder_level == 0)
+                if not need:
+                    continue
+                enrich = self._ai_enrich_medicine(med.name)
+                changed = False
+                if not med.category and enrich.get('category'):
+                    med.category = enrich['category']
+                    changed = True
+                if not med.generic_name and enrich.get('generic_name'):
+                    med.generic_name = enrich['generic_name']
+                    changed = True
+                if med.unit_price == 0 and enrich.get('unit_price') is not None:
+                    med.unit_price = enrich['unit_price']
+                    changed = True
+                if med.reorder_level == 0 and enrich.get('reorder_level') is not None:
+                    med.reorder_level = enrich['reorder_level']
+                    changed = True
+                if changed:
+                    med.save(update_fields=['category', 'generic_name', 'unit_price', 'reorder_level'])
+                    enriched += 1
+
+            messages.success(request, f"AI enrichment completed. Checked: {checked}, Enriched: {enriched}.")
+            return redirect('admin:medicines_medicine_changelist')
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'title': 'AI Enrich Missing Medicine Fields',
+            'candidates_count': candidates.count(),
+        }
+        return render(request, 'admin/medicines/confirm_enrich_missing.html', context)

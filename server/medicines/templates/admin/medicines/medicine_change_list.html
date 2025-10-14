@@ -5,4 +5,10 @@
   <li>
     <a href="{% url 'admin:medicines_medicine_upload' %}" class="addlink">Upload CSV</a>
   </li>
+  <li>
+    <a href="{% url 'admin:medicines_medicine_delete_all' %}" class="deletelink" style="margin-left: 8px;">Delete ALL Medicines</a>
+  </li>
+  <li>
+    <a href="{% url 'admin:medicines_medicine_enrich_missing' %}" class="addlink" style="margin-left: 8px;">AI Enrich Missing</a>
+  </li>
 {% endblock %}

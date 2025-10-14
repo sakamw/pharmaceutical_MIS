@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="card" style="max-width:720px;">
+  <div class="card-body">
+    <h1 class="card-title text-danger">Confirm delete ALL medicines</h1>
+    <p class="card-text">
+      This will permanently delete <strong>all Medicine records</strong> and cascade-delete related <strong>Stock</strong> entries.
+      This action cannot be undone.
+    </p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <a href="{% url 'admin:medicines_medicine_changelist' %}" class="btn btn-outline-secondary">Cancel</a>
+      <button type="submit" class="btn btn-danger">Yes, delete ALL medicines</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
