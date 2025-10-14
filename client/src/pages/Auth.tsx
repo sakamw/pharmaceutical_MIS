@@ -110,6 +110,7 @@ const Auth = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="your-username"
                 required
               />
             </div>
@@ -120,6 +121,7 @@ const Auth = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="your-password"
                 required
               />
             </div>
