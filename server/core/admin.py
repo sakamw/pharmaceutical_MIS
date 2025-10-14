@@ -4,15 +4,29 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.contrib import messages
+import secrets
+import string
 
 
 User = get_user_model()
 
 
+def generate_random_password(length=12):
+    """Generate a random password with letters, digits, and special characters."""
+    characters = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
+
 class CustomUserCreationForm(UserCreationForm):
-    # Render passwords as visible text inputs so admin can see what they type
-    password1 = forms.CharField(label="Password", widget=forms.TextInput(attrs={'type': 'text'}))
-    password2 = forms.CharField(label="Password confirmation", widget=forms.TextInput(attrs={'type': 'text'}))
+    # Generate random password automatically
+    password1 = forms.CharField(
+        label="Generated Password", 
+        widget=forms.TextInput(attrs={'type': 'text', 'readonly': True})
+    )
+    password2 = forms.CharField(
+        label="Confirm Password", 
+        widget=forms.TextInput(attrs={'type': 'text', 'readonly': True})
+    )
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -20,18 +34,23 @@ class CustomUserCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Generate a new random password each time the form is initialized
+        random_password = generate_random_password()
+        self.fields["password1"].initial = random_password
+        self.fields["password2"].initial = random_password
         # Ensure email is visible on the add form; set required if desired
         self.fields["email"].required = True
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    # Limit the add form to only username, email, password, confirm password
+    # Use custom form for user creation with auto-generated passwords
     add_form = CustomUserCreationForm
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
             "fields": ("username", "email", "password1", "password2"),
+            "description": "Passwords are automatically generated. The generated password will be stored and visible to admins.",
         }),
     )
 
