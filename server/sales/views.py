@@ -1,5 +1,5 @@
 from rest_framework import viewsets, filters
-from core.permissions import ReadOnlyOrStaff
+from core.permissions import CanProcessSales
 from .models import Sale
 from .serializers import SaleSerializer
 from django.db import transaction
@@ -10,7 +10,7 @@ from rest_framework.exceptions import ValidationError
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.select_related('medicine', 'stock').all()
     serializer_class = SaleSerializer
-    permission_classes = [ReadOnlyOrStaff]
+    permission_classes = [CanProcessSales]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['sale_date', 'quantity_sold']
 
