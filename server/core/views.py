@@ -24,7 +24,7 @@ class MeView(APIView):
 class UserCountView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
-    def get(self, request):
+    def get(self, _request):
         return Response({"count": User.objects.count()})
 
 
