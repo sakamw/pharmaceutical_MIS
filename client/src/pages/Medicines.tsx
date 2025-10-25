@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { me, MeResponse } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ const Medicines = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<any>(null);
+  const [user, setUser] = useState<MeResponse | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -29,6 +31,13 @@ const Medicines = () => {
     barcode: "",
     reorder_level: "10",
   });
+
+  // Get current user information
+  useEffect(() => {
+    me()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
 
   const { data: medicines, isLoading } = useQuery({
     queryKey: ["medicines"],
@@ -141,12 +150,14 @@ const Medicines = () => {
           <h2 className="text-3xl font-bold tracking-tight">Medicines</h2>
           <p className="text-muted-foreground">Manage your pharmacy inventory</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" /> Add Medicine
-            </Button>
-          </DialogTrigger>
+        {/* Show Add Medicine button only for admin users */}
+        {user?.role === "admin" && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" /> Add Medicine
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -261,6 +272,7 @@ const Medicines = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -294,7 +306,9 @@ const Medicines = () => {
                     <TableHead>Dosage Form</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Reorder Level</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">
+                      {user?.role === "admin" ? "Actions" : "Info"}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -312,24 +326,29 @@ const Medicines = () => {
                       <TableCell>{medicine.reorder_level}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(medicine)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm("Are you sure you want to delete this medicine?")) {
-                                deleteMutation.mutate(medicine.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          {/* Show Edit and Delete buttons only for admin users */}
+                          {user?.role === "admin" && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(medicine)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to delete this medicine?")) {
+                                    deleteMutation.mutate(medicine.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

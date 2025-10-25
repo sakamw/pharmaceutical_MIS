@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { me, MeResponse } from "@/lib/auth";
 import {
   Card,
   CardContent,
@@ -62,6 +63,7 @@ const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStock, setEditingStock] = useState<any>(null);
+  const [user, setUser] = useState<MeResponse | null>(null);
   const [formData, setFormData] = useState({
     medicine: "",
     batch_number: "",
@@ -73,6 +75,13 @@ const Stock = () => {
     manufacturer: "", // Optional manufacturer override
     category: "", // Optional category override
   });
+
+  // Get current user information
+  useEffect(() => {
+    me()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
 
   const { data: stockBatches, isLoading } = useQuery({
     queryKey: ["stock-batches-full"],
@@ -398,12 +407,14 @@ const Stock = () => {
             Monitor inventory levels, expiry dates, and stock alerts
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <Plus className="mr-2 h-4 w-4" /> Add Stock
-            </Button>
-          </DialogTrigger>
+        {/* Show Add Stock button only for admin users */}
+        {user?.role === "admin" && (
+          <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
+            <DialogTrigger asChild>
+              <Button onClick={() => resetForm()}>
+                <Plus className="mr-2 h-4 w-4" /> Add Stock
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -691,6 +702,7 @@ const Stock = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Stock Summary Cards */}
@@ -803,7 +815,9 @@ const Stock = () => {
                         <TableHead>Purchase Price</TableHead>
                         <TableHead>Expiry Date</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>
+                          {user?.role === "admin" ? "Actions" : "Info"}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -853,29 +867,34 @@ const Stock = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEdit(batch)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (
-                                      confirm(
-                                        "Are you sure you want to delete this stock batch?"
-                                      )
-                                    ) {
-                                      deleteStockMutation.mutate(batch.id);
-                                    }
-                                  }}
-                                  disabled={deleteStockMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                                {/* Show Edit and Delete buttons only for admin users */}
+                                {user?.role === "admin" && (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEdit(batch)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (
+                                          confirm(
+                                            "Are you sure you want to delete this stock batch?"
+                                          )
+                                        ) {
+                                          deleteStockMutation.mutate(batch.id);
+                                        }
+                                      }}
+                                      disabled={deleteStockMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
