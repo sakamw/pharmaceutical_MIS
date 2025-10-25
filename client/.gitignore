@@ -12,6 +12,8 @@ dist
 # Environment variables
 .env
 .env.production
+.vercel
+.netlify
 .vscode/*
 !.vscode/extensions.json
 .idea
