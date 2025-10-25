@@ -5,24 +5,24 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables based on environment
+# Production/Development Environment Detection - MUST be first
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
+IS_PRODUCTION = ENVIRONMENT == 'production'
+IS_DEVELOPMENT = ENVIRONMENT == 'development'
+
+# Load environment variables based on environment - AFTER environment detection
 env_file = BASE_DIR / f'.env.{ENVIRONMENT}' if IS_PRODUCTION else BASE_DIR / '.env'
 if env_file.exists():
     load_dotenv(env_file)
 else:
     load_dotenv(BASE_DIR / '.env')  # Fallback to default .env
 
-# Production/Development Environment Detection
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
-IS_PRODUCTION = ENVIRONMENT == 'production'
-IS_DEVELOPMENT = ENVIRONMENT == 'development'
-
-# Security Settings
+# Security Settings - MUST be after environment loading
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
     if IS_PRODUCTION:
         raise ValueError('DJANGO_SECRET_KEY must be set in production')
-    SECRET_KEY = 'dev-secret-key-change-in-production'
+    SECRET_KEY = 'dev-secret-key-change-in-production-make-it-longer-for-security'
 
 DEBUG = os.getenv('DJANGO_DEBUG', '1' if IS_DEVELOPMENT else '0') == '1'
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -100,6 +100,15 @@ else:
     }
 
 AUTH_USER_MODEL = 'core.User'
+
+# CORS Settings - Production vs Development
+if IS_PRODUCTION:
+    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if not CORS_ALLOWED_ORIGINS or CORS_ALLOWED_ORIGINS == ['']:
+        CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOW_CREDENTIALS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {
