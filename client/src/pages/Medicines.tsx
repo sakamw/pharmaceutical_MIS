@@ -36,6 +36,8 @@ const Medicines = () => {
       const data = await api.get<any[]>("/api/medicines/");
       return data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
+    refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
   });
 
   const createMutation = useMutation({

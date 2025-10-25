@@ -11,6 +11,8 @@ const Dashboard = () => {
   const { data: summary } = useQuery({
     queryKey: ["reports-summary"],
     queryFn: async () => api.get<any>("/api/reports/summary/"),
+    staleTime: 2 * 60 * 1000, // 2 minutes - dashboard data is relatively stable
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes for fresh dashboard data
   });
 
   const totalMedicines = summary?.total_medicines ?? undefined; // optional if added later

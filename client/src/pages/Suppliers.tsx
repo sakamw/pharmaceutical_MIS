@@ -53,6 +53,8 @@ const Suppliers = () => {
       const data = await api.get<any[]>("/api/suppliers/");
       return data || [];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - suppliers don't change often
+    refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
   });
 
   const createMutation = useMutation({

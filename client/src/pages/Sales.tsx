@@ -64,6 +64,8 @@ const Sales = () => {
       const data = await api.get<any[]>("/api/sales/");
       return data || [];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes - sales data changes with transactions
+    refetchInterval: false,
   });
 
   const { data: medicines } = useQuery({
@@ -72,6 +74,8 @@ const Sales = () => {
       const data = await api.get<any[]>("/api/medicines/");
       return data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
+    refetchInterval: false,
   });
 
   const { data: batches } = useQuery({
@@ -85,6 +89,8 @@ const Sales = () => {
       return data || [];
     },
     enabled: !!selectedMedicine,
+    staleTime: 1 * 60 * 1000, // 1 minute - stock batches change with sales
+    refetchInterval: false,
   });
 
   const createSaleMutation = useMutation({
@@ -102,6 +108,9 @@ const Sales = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["stock-batches-full"] });
+      queryClient.invalidateQueries({ queryKey: ["stock-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["low-stock-alerts"] });
+      // Only invalidate medicines if needed - sales don't typically change medicine data
       toast.success("Sale completed successfully");
       setDialogOpen(false);
       setCart([]);

@@ -52,6 +52,7 @@ import {
   Plus,
   Edit,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -67,6 +68,10 @@ const Stock = () => {
     expiry_date: "",
     quantity: "",
     purchase_price: "",
+    supplier: "", // New field for supplier
+    update_medicine: false, // Option to update medicine info
+    manufacturer: "", // Optional manufacturer override
+    category: "", // Optional category override
   });
 
   const { data: stockBatches, isLoading } = useQuery({
@@ -75,6 +80,8 @@ const Stock = () => {
       const data = await api.get<any[]>("/api/stock/");
       return data || [];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes - stock data changes frequently but not instantly
+    refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
   });
 
   const { data: medicines } = useQuery({
@@ -83,6 +90,18 @@ const Stock = () => {
       const data = await api.get<any[]>("/api/medicines/");
       return data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
+    refetchInterval: false,
+  });
+
+  const { data: suppliers } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const data = await api.get<any[]>("/api/suppliers/");
+      return data || [];
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - suppliers change rarely
+    refetchInterval: false,
   });
 
   const { data: stockSummary } = useQuery({
@@ -91,6 +110,8 @@ const Stock = () => {
       const data = await api.get<any>("/api/stock/summary/");
       return data;
     },
+    staleTime: 1 * 60 * 1000, // 1 minute - summary data changes with stock changes
+    refetchInterval: false,
   });
 
   const { data: lowStockAlerts } = useQuery({
@@ -99,6 +120,8 @@ const Stock = () => {
       const data = await api.get<any[]>("/api/stock/low_stock_alerts/");
       return data || [];
     },
+    staleTime: 1 * 60 * 1000, // 1 minute - alerts need to be relatively fresh
+    refetchInterval: false,
   });
 
   const { data: expiringSoon } = useQuery({
@@ -107,6 +130,8 @@ const Stock = () => {
       const data = await api.get<any[]>("/api/stock/expiring_soon/");
       return data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - expiry data doesn't change rapidly
+    refetchInterval: false,
   });
 
   const { data: expiredStock } = useQuery({
@@ -115,6 +140,8 @@ const Stock = () => {
       const data = await api.get<any[]>("/api/stock/expired/");
       return data || [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - expired stock doesn't change rapidly
+    refetchInterval: false,
   });
 
   const createStockMutation = useMutation({
@@ -125,9 +152,12 @@ const Stock = () => {
       queryClient.invalidateQueries({ queryKey: ["stock-batches-full"] });
       queryClient.invalidateQueries({ queryKey: ["stock-summary"] });
       queryClient.invalidateQueries({ queryKey: ["low-stock-alerts"] });
+      // Only invalidate medicines if we're updating medicine info
+      if (formData.update_medicine) {
+        queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] });
+      }
       toast.success("Stock added successfully");
-      setDialogOpen(false);
-      resetForm();
+      handleDialogClose(false);
     },
     onError: (error) => {
       toast.error(`Error: ${(error as any).message}`);
@@ -142,9 +172,12 @@ const Stock = () => {
       queryClient.invalidateQueries({ queryKey: ["stock-batches-full"] });
       queryClient.invalidateQueries({ queryKey: ["stock-summary"] });
       queryClient.invalidateQueries({ queryKey: ["low-stock-alerts"] });
+      // Only invalidate medicines if we're updating medicine info
+      if (formData.update_medicine) {
+        queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] });
+      }
       toast.success("Stock updated successfully");
-      setDialogOpen(false);
-      resetForm();
+      handleDialogClose(false);
     },
     onError: (error) => {
       toast.error(`Error: ${(error as any).message}`);
@@ -166,6 +199,19 @@ const Stock = () => {
     },
   });
 
+  const updateMedicineMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      await api.put(`/api/medicines/${id}/`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] });
+      toast.success("Medicine updated successfully");
+    },
+    onError: (error) => {
+      toast.error(`Error updating medicine: ${(error as any).message}`);
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       medicine: "",
@@ -173,26 +219,130 @@ const Stock = () => {
       expiry_date: "",
       quantity: "",
       purchase_price: "",
+      supplier: "",
+      update_medicine: false,
+      manufacturer: "",
+      category: "",
     });
     setEditingStock(null);
   };
 
-  const handleEdit = (stock: any) => {
-    setEditingStock(stock);
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      resetForm();
+    }
+  };
+
+  const generateBatchNumber = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    let batchNumber;
+    let attempts = 0;
+    const maxAttempts = 50; // Prevent infinite loops
+
+    do {
+      const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+      batchNumber = `BATCH-${year}-${month}-${randomNum}`;
+      attempts++;
+
+      // Check if this batch number already exists in current stock
+      const exists = stockBatches?.some(batch => batch.batch_number === batchNumber);
+
+      if (!exists || attempts >= maxAttempts) {
+        break; // Use this number or give up after max attempts
+      }
+    } while (attempts < maxAttempts);
+
+    // If we had to try multiple times, mention it
+    if (attempts > 1) {
+      toast.success(`Batch number generated after ${attempts} attempts: ${batchNumber}`);
+    } else {
+      toast.success(`Batch number generated: ${batchNumber}`);
+    }
+
+    setFormData({ ...formData, batch_number: batchNumber });
+  };
+
+  const handleEdit = (batch: any) => {
+    setEditingStock(batch);
     setFormData({
-      medicine: stock.medicine.toString(),
-      batch_number: stock.batch_number,
-      expiry_date: stock.expiry_date,
-      quantity: stock.quantity.toString(),
-      purchase_price: stock.purchase_price.toString(),
+      medicine: batch.medicine.toString(),
+      batch_number: batch.batch_number, // Keep original batch number
+      expiry_date: batch.expiry_date,
+      quantity: batch.quantity.toString(),
+      purchase_price: batch.purchase_price.toString(),
+      supplier: "",
+      update_medicine: false,
+      manufacturer: "",
+      category: "",
     });
     setDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.medicine || !formData.batch_number || !formData.expiry_date || !formData.quantity || !formData.purchase_price) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate batch number format
+    const batchNumberPattern = /^BATCH-\d{4}-\d{2}-\d{4}$/;
+    if (!batchNumberPattern.test(formData.batch_number)) {
+      toast.error("Invalid batch number format. Expected format: BATCH-YYYY-MM-NNNN");
+      return;
+    }
+
+    let medicineId = parseInt(formData.medicine);
+
+    // Update medicine information if requested (only when adding new stock)
+    if (formData.update_medicine && formData.medicine && !editingStock) {
+      const selectedMedicine = medicines?.find(m => m.id.toString() === formData.medicine);
+      if (selectedMedicine) {
+        // Include all current medicine data plus any changes
+        const updateData: any = {
+          name: selectedMedicine.name,
+          category: selectedMedicine.category,
+          description: selectedMedicine.description || "",
+          manufacturer: selectedMedicine.manufacturer || "",
+          dosage_form: selectedMedicine.dosage_form,
+          unit_price: selectedMedicine.unit_price,
+          barcode: selectedMedicine.barcode || "",
+          reorder_level: selectedMedicine.reorder_level,
+        };
+
+        // Override with new values if provided
+        if (formData.supplier && formData.supplier !== selectedMedicine.supplier?.toString()) {
+          updateData.supplier = parseInt(formData.supplier);
+        } else if (selectedMedicine.supplier) {
+          updateData.supplier = selectedMedicine.supplier.id || selectedMedicine.supplier;
+        }
+
+        if (formData.manufacturer && formData.manufacturer !== selectedMedicine.manufacturer) {
+          updateData.manufacturer = formData.manufacturer;
+        }
+
+        if (formData.category && formData.category !== selectedMedicine.category) {
+          updateData.category = formData.category;
+        }
+
+        try {
+          await updateMedicineMutation.mutateAsync({ id: formData.medicine, data: updateData });
+          // Refresh medicines data after update
+          await queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] });
+        } catch (error) {
+          toast.error(`Error updating medicine: ${(error as any).message}`);
+          return;
+        }
+      }
+    }
+
     const submitData = {
-      medicine: parseInt(formData.medicine),
+      medicine: medicineId,
       batch_number: formData.batch_number,
       expiry_date: formData.expiry_date,
       quantity: parseInt(formData.quantity),
@@ -248,7 +398,7 @@ const Stock = () => {
             Monitor inventory levels, expiry dates, and stock alerts
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
               <Plus className="mr-2 h-4 w-4" /> Add Stock
@@ -274,6 +424,7 @@ const Stock = () => {
                     setFormData({ ...formData, medicine: value })
                   }
                   required
+                  disabled={!!editingStock}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select medicine" />
@@ -281,23 +432,192 @@ const Stock = () => {
                   <SelectContent>
                     {medicines?.map((med) => (
                       <SelectItem key={med.id} value={med.id.toString()}>
-                        {med.name}
+                        <div className="flex flex-col items-start">
+                          <span>{med.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {med.category} • {med.manufacturer || 'No manufacturer'} • ${med.unit_price}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {editingStock && (
+                  <p className="text-xs text-muted-foreground">
+                    Medicine cannot be changed when editing a stock batch
+                  </p>
+                )}
               </div>
+
+              {/* Option to update medicine info - only when adding new stock */}
+              {!editingStock && (
+                <>
+                  {/* Enhanced medicine information display */}
+                  {formData.medicine && (
+                    <div className="space-y-2 p-3 bg-muted rounded-lg">
+                      {(() => {
+                        const selectedMed = medicines?.find(m => m.id.toString() === formData.medicine);
+                        return selectedMed ? (
+                          <div className="text-sm space-y-1">
+                            <div className="flex justify-between">
+                              <span className="font-medium">Category:</span>
+                              <Badge variant="outline">{selectedMed.category || 'Not set'}</Badge>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">Manufacturer:</span>
+                              <span>{selectedMed.manufacturer || 'Not set'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">Unit Price:</span>
+                              <span>${selectedMed.unit_price}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-medium">Supplier:</span>
+                              <span>{selectedMed.supplier?.name || 'Not set'}</span>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Option to update medicine info */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="update_medicine"
+                      checked={formData.update_medicine}
+                      onChange={(e) =>
+                        setFormData({ ...formData, update_medicine: e.target.checked })
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="update_medicine" className="text-sm">
+                      Update medicine information
+                    </Label>
+                  </div>
+
+                  {/* Conditional fields for medicine updates */}
+                  {formData.update_medicine && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="supplier">Supplier (Optional)</Label>
+                        <Select
+                          value={formData.supplier}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, supplier: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select supplier" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers?.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                                <div className="flex flex-col items-start">
+                                  <span>{supplier.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Rating: {supplier.reliability_rating}/5
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="manufacturer">Manufacturer (Optional)</Label>
+                        <Input
+                          id="manufacturer"
+                          value={formData.manufacturer}
+                          onChange={(e) =>
+                            setFormData({ ...formData, manufacturer: e.target.value })
+                          }
+                          placeholder="Override manufacturer"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category (Optional)</Label>
+                        <Input
+                          id="category"
+                          value={formData.category}
+                          onChange={(e) =>
+                            setFormData({ ...formData, category: e.target.value })
+                          }
+                          placeholder="Override category"
+                        />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Show medicine info when editing */}
+              {editingStock && (
+                <div className="space-y-2 p-3 bg-muted rounded-lg">
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Medicine:</span>
+                      <span>{editingStock.medicine_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Category:</span>
+                      <Badge variant="outline">{editingStock.medicine_category}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Current Quantity:</span>
+                      <Badge variant={editingStock.quantity < 10 ? "destructive" : "default"}>
+                        {editingStock.quantity}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Purchase Price:</span>
+                      <span>${editingStock.purchase_price}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="batch_number">Batch Number</Label>
-                <Input
-                  id="batch_number"
-                  value={formData.batch_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, batch_number: e.target.value })
-                  }
-                  required
-                />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    id="batch_number"
+                    value={formData.batch_number}
+                    onChange={(e) =>
+                      setFormData({ ...formData, batch_number: e.target.value })
+                    }
+                    required
+                    disabled={!!editingStock}
+                    placeholder="BATCH-YYYY-MM-NNNN or click generate"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={generateBatchNumber}
+                    disabled={!!editingStock}
+                    title="Generate random batch number"
+                    className="sm:w-auto w-full"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Generate
+                  </Button>
+                </div>
+                {editingStock && (
+                  <p className="text-xs text-muted-foreground">
+                    Batch number cannot be changed when editing
+                  </p>
+                )}
+                {!editingStock && (
+                  <p className="text-xs text-muted-foreground">
+                    Format: BATCH-YYYY-MM-NNNN. Click generate for automatic creation.
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="expiry_date">Expiry Date</Label>
                 <Input
@@ -310,6 +630,7 @@ const Stock = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity</Label>
                 <Input
@@ -323,6 +644,7 @@ const Stock = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="purchase_price">Purchase Price</Label>
                 <Input
@@ -337,11 +659,12 @@ const Stock = () => {
                   required
                 />
               </div>
+
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setDialogOpen(false)}
+                  onClick={() => handleDialogClose(false)}
                 >
                   Cancel
                 </Button>
