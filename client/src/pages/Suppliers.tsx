@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { me, MeResponse } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { api } from "../lib/api";
+import { me, MeResponse } from "../lib/auth";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "../components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -29,11 +29,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "../components/ui/table";
 import { toast } from "sonner";
 import { Plus, Search, Edit, Trash2, Loader2, Star } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "../components/ui/textarea";
 
 const Suppliers = () => {
   const queryClient = useQueryClient();
@@ -47,6 +46,7 @@ const Suppliers = () => {
     email: "",
     phone: "",
     reliability_rating: "0",
+    address: "",
   });
 
   // Get current user information
@@ -108,7 +108,6 @@ const Suppliers = () => {
       toast.error(`Error: ${(error as any).message}`);
     },
   });
-
   const resetForm = () => {
     setFormData({
       name: "",
@@ -116,6 +115,7 @@ const Suppliers = () => {
       email: "",
       phone: "",
       reliability_rating: "0",
+      address: "",
     });
     setEditingSupplier(null);
   };
@@ -142,6 +142,7 @@ const Suppliers = () => {
       email: supplier.email || "",
       phone: supplier.phone || "",
       reliability_rating: supplier.reliability_rating?.toString() || "0",
+      address: supplier.address || "",
     });
     setDialogOpen(true);
   };
@@ -183,125 +184,125 @@ const Suppliers = () => {
           </p>
         </div>
         {/* Show Add Supplier button only for admin users */}
-        {user?.role === "admin" && (
+        {user?.role === "ADMIN" && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="mr-2 h-4 w-4" /> Add Supplier
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingSupplier
-                  ? "Update supplier information"
-                  : "Add a new supplier to your network"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Supplier Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingSupplier
+                    ? "Update supplier information"
+                    : "Add a new supplier to your network"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Supplier Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_person">Contact Person</Label>
+                    <Input
+                      id="contact_person"
+                      value={formData.contact_person}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_person: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="performance_rating">
+                      Performance Rating (0-5)
+                    </Label>
+                    <Input
+                      id="reliability_rating"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="5"
+                      value={formData.reliability_rating}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          reliability_rating: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contact_person">Contact Person</Label>
-                  <Input
-                    id="contact_person"
-                    value={formData.contact_person}
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    id="address"
+                    value={formData.address}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contact_person: e.target.value,
-                      })
+                      setFormData({ ...formData, address: e.target.value })
                     }
+                    rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
                     }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="performance_rating">
-                    Performance Rating (0-5)
-                  </Label>
-                  <Input
-                    id="performance_rating"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={formData.performance_rating}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        performance_rating: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
-                    createMutation.isPending || updateMutation.isPending
-                  }
-                >
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {editingSupplier ? "Update" : "Add"} Supplier
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                  >
+                    {(createMutation.isPending || updateMutation.isPending) && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {editingSupplier ? "Update" : "Add"} Supplier
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -336,7 +337,7 @@ const Suppliers = () => {
                     <TableHead>Phone</TableHead>
                     <TableHead>Performance</TableHead>
                     <TableHead className="text-right">
-                      {user?.role === "admin" ? "Actions" : "Info"}
+                      {user?.role === "ADMIN" ? "Actions" : "Info"}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -355,7 +356,7 @@ const Suppliers = () => {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {/* Show Edit and Delete buttons only for admin users */}
-                          {user?.role === "admin" && (
+                          {user?.role === "ADMIN" && (
                             <>
                               <Button
                                 variant="ghost"

@@ -6,7 +6,6 @@ from django.urls import path
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import transaction
-from suppliers.models import Supplier
 import csv
 import io
 import os
@@ -21,14 +20,14 @@ class MedicineUploadForm(forms.Form):
         required=False,
         initial=True,
         label="Use AI enrichment for missing fields",
-        help_text="If enabled, missing category, generic name, unit price, and reorder level will be inferred from the medicine name."
+        help_text="If enabled, missing generic name, unit price, and reorder level will be inferred from the medicine name."
     )
 
 
 @admin.register(Medicine)
 class MedicineAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'category', 'generic_name', 'unit_price', 'reorder_level')
-    search_fields = ('name', 'category', 'generic_name')
+    list_display = ('id', 'name', 'generic_name', 'unit_price', 'reorder_level')
+    search_fields = ('name', 'generic_name')
     actions = ['bulk_delete_selected']
 
     class StockInline(admin.TabularInline):
@@ -283,7 +282,6 @@ class MedicineAdmin(admin.ModelAdmin):
         """
         expected = {
             'name': ['name', 'medicine', 'product_name', 'drug_name', 'medication', 'product'],
-            'category': ['category', 'class', 'type', 'classification', 'therapeutic_class'],
             'generic_name': ['generic_name', 'generic', 'active_ingredient', 'ingredient'],
             'description': ['description', 'desc', 'details', 'info', 'information'],
             'manufacturer': ['manufacturer', 'maker', 'brand', 'company', 'producer'],
@@ -291,7 +289,6 @@ class MedicineAdmin(admin.ModelAdmin):
             'barcode': ['barcode', 'sku', 'code', 'product_code', 'item_code'],
             'unit_price': ['unit_price', 'price', 'selling_price', 'cost', 'rate', 'amount'],
             'reorder_level': ['reorder_level', 'reorder', 'min_stock', 'minimum_stock', 'reorder_point'],
-            'supplier': ['supplier', 'vendor', 'distributor', 'provider'],
             'batch_number': ['batch_number', 'batch', 'lot', 'lot_number', 'batch_id'],
             'expiry_date': ['expiry_date', 'expires', 'expiry', 'expiration_date', 'exp_date'],
             'quantity': ['quantity', 'qty', 'stock', 'amount', 'count', 'units'],
@@ -338,7 +335,7 @@ class MedicineAdmin(admin.ModelAdmin):
     def _ai_enrich_medicine(self, name: str):
         """
         Enhanced AI enrichment for medicine data with better prompts and validation.
-        Generates: category, generic_name, description, manufacturer, dosage_form, unit_price, reorder_level
+        Generates: generic_name, description, manufacturer, dosage_form, unit_price, reorder_level
         """
         if not name:
             return {}
@@ -353,7 +350,6 @@ class MedicineAdmin(admin.ModelAdmin):
                 f"Given a medicine brand or product name, provide comprehensive information. "
                 f"Medicine name: {name}\n\n"
                 f"Respond with ONLY a JSON object containing these keys (omit any you cannot determine):\n"
-                f"- category: Medical category (e.g., 'Antibiotic', 'Pain Relief', 'Cardiovascular')\n"
                 f"- generic_name: Generic drug name (e.g., 'Acetaminophen', 'Ibuprofen')\n"
                 f"- description: Brief description of the medicine's purpose\n"
                 f"- manufacturer: Pharmaceutical company name\n"
@@ -384,9 +380,6 @@ class MedicineAdmin(admin.ModelAdmin):
             
             if isinstance(data, dict):
                 # Validate and clean each field
-                if 'category' in data and isinstance(data['category'], str) and data['category'].strip():
-                    result['category'] = data['category'].strip()[:255]
-                
                 if 'generic_name' in data and isinstance(data['generic_name'], str) and data['generic_name'].strip():
                     result['generic_name'] = data['generic_name'].strip()[:255]
                 
@@ -459,12 +452,6 @@ class MedicineAdmin(admin.ModelAdmin):
                             actual = header_map.get(key)
                             return (row.get(actual) if actual else None) or default
 
-                        # Supplier
-                        supplier_name = get('supplier', '').strip()
-                        supplier = None
-                        if supplier_name:
-                            supplier, _ = Supplier.objects.get_or_create(name=supplier_name)
-
                         # Medicine
                         med_name = get('name').strip()
                         if not med_name:
@@ -485,13 +472,11 @@ class MedicineAdmin(admin.ModelAdmin):
                                     break
 
                         med_defaults = {
-                            'category': get('category', '').strip(),
                             'generic_name': get('generic_name', '').strip(),
                             'description': get('description', '').strip(),
                             'manufacturer': get('manufacturer', '').strip(),
                             'dosage_form': dosage_form,
                             'barcode': get('barcode', '').strip(),
-                            'supplier': supplier,
                         }
 
                         # Parse numeric fields with better validation
@@ -517,8 +502,7 @@ class MedicineAdmin(admin.ModelAdmin):
 
                         # Enhanced AI enrichment for missing fields
                         need_enrich = use_ai and (
-                            not med_defaults['category']
-                            or not med_defaults['generic_name']
+                            not med_defaults['generic_name']
                             or not med_defaults['description']
                             or not med_defaults['manufacturer']
                             or med_defaults['dosage_form'] == Medicine.DosageForm.TABLET  # Default value
@@ -534,9 +518,6 @@ class MedicineAdmin(admin.ModelAdmin):
                                 if enrich:
                                     changed = False
                                     # Apply AI-generated fields only if CSV data is missing
-                                    if not med_defaults['category'] and enrich.get('category'):
-                                        med_defaults['category'] = enrich['category']
-                                        changed = True
                                     if not med_defaults['generic_name'] and enrich.get('generic_name'):
                                         med_defaults['generic_name'] = enrich['generic_name']
                                         changed = True
@@ -659,8 +640,8 @@ class MedicineAdmin(admin.ModelAdmin):
         
         # Write headers
         headers = [
-            'name', 'category', 'generic_name', 'description', 'manufacturer', 
-            'dosage_form', 'barcode', 'unit_price', 'reorder_level', 'supplier',
+            'name', 'generic_name', 'description', 'manufacturer', 
+            'dosage_form', 'barcode', 'unit_price', 'reorder_level',
             'batch_number', 'expiry_date', 'quantity', 'purchase_price'
         ]
         writer.writerow(headers)
@@ -668,13 +649,13 @@ class MedicineAdmin(admin.ModelAdmin):
         # Write sample data
         sample_data = [
             [
-                'Paracetamol 500mg', 'Analgesic', 'Paracetamol', 'Pain relief medication', 'ABC Pharma',
-                'tablet', 'ABC123456', '5.50', '100', 'MedSupply Co',
+                'Paracetamol 500mg', 'Paracetamol', 'Pain relief medication', 'ABC Pharma',
+                'tablet', 'ABC123456', '5.50', '100',
                 'BATCH001', '2025-12-31', '500', '4.00'
             ],
             [
-                'Amoxicillin 250mg', 'Antibiotic', 'Amoxicillin', 'Broad spectrum antibiotic', 'XYZ Labs',
-                'capsule', 'XYZ789012', '8.75', '50', 'PharmaDist',
+                'Amoxicillin 250mg', 'Amoxicillin', 'Broad spectrum antibiotic', 'XYZ Labs',
+                'capsule', 'XYZ789012', '8.75', '50',
                 'BATCH002', '2025-06-30', '200', '6.50'
             ]
         ]

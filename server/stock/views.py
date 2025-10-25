@@ -43,8 +43,6 @@ class StockViewSet(viewsets.ModelViewSet):
                 'medicine_name': medicine.name,
                 'current_stock': total_stock,
                 'reorder_level': medicine.reorder_level,
-                'category': medicine.category,
-                'supplier': medicine.supplier.name if medicine.supplier else None,
                 'unit_price': float(medicine.unit_price),
                 'urgency': 'critical' if total_stock == 0 else 'low'
             })

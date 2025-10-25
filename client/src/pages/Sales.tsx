@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../lib/api";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,8 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "../components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -29,14 +28,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "../components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../components/ui/select";
 import { toast } from "sonner";
 import { Plus, Search, Loader2, ShoppingCart, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -44,7 +43,6 @@ import { format } from "date-fns";
 interface CartItem {
   medicine_id: string;
   medicine_name: string;
-  batch_id: string;
   quantity: number;
   unit_price: number;
 }
@@ -55,7 +53,6 @@ const Sales = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedMedicine, setSelectedMedicine] = useState("");
-  const [selectedBatch, setSelectedBatch] = useState("");
   const [quantity, setQuantity] = useState("1");
 
   const { data: sales, isLoading: salesLoading } = useQuery({
@@ -78,28 +75,12 @@ const Sales = () => {
     refetchInterval: false,
   });
 
-  const { data: batches } = useQuery({
-    queryKey: ["batches-for-medicine", selectedMedicine],
-    queryFn: async () => {
-      if (!selectedMedicine) return [];
-      const today = new Date().toISOString().split("T")[0];
-      const data = await api.get<any[]>(
-        `/api/stock/?medicine=${selectedMedicine}&quantity__gt=0&expiry_date__gte=${today}`
-      );
-      return data || [];
-    },
-    enabled: !!selectedMedicine,
-    staleTime: 1 * 60 * 1000, // 1 minute - stock batches change with sales
-    refetchInterval: false,
-  });
-
   const createSaleMutation = useMutation({
     mutationFn: async () => {
       // Post one Sale per cart item to the Django API.
       for (const item of cart) {
         await api.post("/api/sales/", {
           medicine: item.medicine_id,
-          stock: item.batch_id,
           quantity_sold: item.quantity,
           sale_price: item.unit_price,
         });
@@ -111,7 +92,7 @@ const Sales = () => {
       queryClient.invalidateQueries({ queryKey: ["stock-summary"] });
       queryClient.invalidateQueries({ queryKey: ["low-stock-alerts"] });
       // Only invalidate medicines if needed - sales don't typically change medicine data
-      toast.success("Sale completed successfully");
+      toast.success("Sale completed successfully! 👍");
       setDialogOpen(false);
       setCart([]);
     },
@@ -121,34 +102,26 @@ const Sales = () => {
   });
 
   const addToCart = () => {
-    if (!selectedMedicine || !selectedBatch || !quantity) {
-      toast.error("Please select medicine, batch, and quantity");
+    if (!selectedMedicine || !quantity) {
+      toast.error("Please select medicine and quantity");
       return;
     }
 
     const medicine = medicines?.find((m) => m.id === selectedMedicine);
-    const batch = batches?.find((b) => b.id === selectedBatch);
 
-    if (!medicine || !batch) return;
-
-    if (parseInt(quantity) > batch.quantity) {
-      toast.error("Quantity exceeds available stock");
-      return;
-    }
+    if (!medicine) return;
 
     setCart([
       ...cart,
       {
         medicine_id: medicine.id,
         medicine_name: medicine.name,
-        batch_id: batch.id,
         quantity: parseInt(quantity),
         unit_price: parseFloat(medicine.unit_price.toString()),
       },
     ]);
 
     setSelectedMedicine("");
-    setSelectedBatch("");
     setQuantity("1");
   };
 
@@ -162,9 +135,7 @@ const Sales = () => {
   );
 
   const filteredSales = sales?.filter((sale) => {
-    const hay = `${sale.medicine_name || ""} ${
-      sale.batch_number || ""
-    }`.toLowerCase();
+    const hay = `${sale.medicine_name || ""}`.toLowerCase();
     return hay.includes(searchTerm.toLowerCase());
   });
 
@@ -193,7 +164,7 @@ const Sales = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Add Items</Label>
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-3">
                   <Select
                     value={selectedMedicine}
                     onValueChange={setSelectedMedicine}
@@ -205,23 +176,6 @@ const Sales = () => {
                       {medicines?.map((med) => (
                         <SelectItem key={med.id} value={med.id}>
                           {med.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={selectedBatch}
-                    onValueChange={setSelectedBatch}
-                    disabled={!selectedMedicine}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select batch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {batches?.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
-                          {batch.batch_number} (Qty: {batch.quantity})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -262,9 +216,9 @@ const Sales = () => {
                           <TableRow key={index}>
                             <TableCell>{item.medicine_name}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>${item.unit_price}</TableCell>
+                            <TableCell>Ksh {item.unit_price}</TableCell>
                             <TableCell>
-                              ${(item.quantity * item.unit_price).toFixed(2)}
+                              Ksh {(item.quantity * item.unit_price).toFixed(2)}
                             </TableCell>
                             <TableCell>
                               <Button
@@ -285,7 +239,7 @@ const Sales = () => {
                             Total:
                           </TableCell>
                           <TableCell className="font-bold">
-                            ${totalAmount.toFixed(2)}
+                            Ksh {totalAmount.toFixed(2)}
                           </TableCell>
                           <TableCell></TableCell>
                         </TableRow>
@@ -346,7 +300,6 @@ const Sales = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Medicine</TableHead>
-                    <TableHead>Batch</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Date</TableHead>
@@ -358,10 +311,9 @@ const Sales = () => {
                       <TableCell className="font-medium">
                         {sale.medicine_name}
                       </TableCell>
-                      <TableCell>{sale.batch_number}</TableCell>
                       <TableCell>{sale.quantity_sold}</TableCell>
                       <TableCell className="font-semibold">
-                        ${parseFloat(sale.sale_price.toString()).toFixed(2)}
+                        Ksh {parseFloat(sale.sale_price.toString()).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         {format(new Date(sale.sale_date), "MMM dd, yyyy")}

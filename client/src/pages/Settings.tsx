@@ -1,7 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Label } from "../components/ui/label";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import { Settings as SettingsIcon, User, Building } from "lucide-react";
 
 const Settings = () => {
@@ -9,7 +15,9 @@ const Settings = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">Manage your account and pharmacy settings</p>
+        <p className="text-muted-foreground">
+          Manage your account and pharmacy settings
+        </p>
       </div>
 
       <div className="grid gap-6">
@@ -28,8 +36,15 @@ const Settings = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.email@example.com" disabled />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                disabled
+              />
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed
+              </p>
             </div>
             <Button>Save Changes</Button>
           </CardContent>
@@ -72,11 +87,15 @@ const Settings = () => {
               <SettingsIcon className="h-5 w-5 text-primary" />
               <CardTitle>System Settings</CardTitle>
             </div>
-            <CardDescription>Additional system configurations coming soon</CardDescription>
+            <CardDescription>
+              Additional system configurations coming soon
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Advanced settings including user roles management, backup configuration, and system preferences will be available in future updates.
+              Advanced settings including user roles management, backup
+              configuration, and system preferences will be available in future
+              updates.
             </p>
           </CardContent>
         </Card>

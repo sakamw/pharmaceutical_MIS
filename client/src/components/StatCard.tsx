@@ -1,6 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 interface StatCardProps {
   title: string;
@@ -13,7 +18,13 @@ interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({ title, value, icon: Icon, trend, className }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  className,
+}: StatCardProps) {
   return (
     <Card className={cn("transition-all hover:shadow-lg", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -27,10 +38,12 @@ export function StatCard({ title, value, icon: Icon, trend, className }: StatCar
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {trend && (
-          <p className={cn(
-            "text-xs mt-1",
-            trend.isPositive ? "text-success" : "text-destructive"
-          )}>
+          <p
+            className={cn(
+              "text-xs mt-1",
+              trend.isPositive ? "text-success" : "text-destructive"
+            )}
+          >
             {trend.isPositive ? "↑" : "↓"} {trend.value}
           </p>
         )}

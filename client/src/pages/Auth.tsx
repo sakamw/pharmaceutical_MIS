@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, me } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { login, me } from "../lib/auth";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../components/ui/card";
 import { toast } from "sonner";
 import { Pill, Loader2 } from "lucide-react";
-import { PasswordChangeModal } from "@/components/PasswordChangeModal";
+import { PasswordChangeModal } from "../components/PasswordChangeModal";
 
 const Auth = () => {
   const navigate = useNavigate();

@@ -6,7 +6,7 @@ from stock.models import Stock
 
 class Sale(models.Model):
     medicine = models.ForeignKey(Medicine, on_delete=models.PROTECT)
-    stock = models.ForeignKey(Stock, on_delete=models.PROTECT)
+    stock = models.ForeignKey(Stock, on_delete=models.PROTECT, null=True, blank=True)
     quantity_sold = models.PositiveIntegerField()
     sale_date = models.DateField(default=timezone.now)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)

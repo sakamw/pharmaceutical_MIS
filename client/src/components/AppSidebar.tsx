@@ -1,4 +1,12 @@
-import { Home, Pill, Package, ShoppingCart, Users, BarChart3, Settings, Cross } from "lucide-react";
+import {
+  Home,
+  Pill,
+  Package,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  Cross,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -11,14 +19,13 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-} from "@/components/ui/sidebar";
+} from "../components/ui/sidebar";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Medicines", url: "/medicines", icon: Pill },
   { title: "Stock", url: "/stock", icon: Package },
   { title: "Sales", url: "/sales", icon: ShoppingCart },
-  { title: "Suppliers", url: "/suppliers", icon: Users },
   { title: "Reports", url: "/reports", icon: BarChart3 },
 ];
 
@@ -31,14 +38,20 @@ export function AppSidebar() {
             <Cross className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-sidebar-foreground">PharmaCare MIS</h2>
-            <p className="text-xs text-sidebar-foreground/70">Pharmaceutical System</p>
+            <h2 className="font-bold text-lg text-sidebar-foreground">
+              PharmaCare MIS
+            </h2>
+            <p className="text-xs text-sidebar-foreground/70">
+              Pharmaceutical System
+            </p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">
+            Main Menu
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

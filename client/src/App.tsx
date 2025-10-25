@@ -1,22 +1,20 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { SidebarProvider } from "./components/ui/sidebar";
+import { AppSidebar } from "./components/AppSidebar";
+import { DashboardHeader } from "./components/DashboardHeader";
 import { useEffect, useState } from "react";
-import { me, MeResponse } from "@/lib/auth";
+import { me, MeResponse } from "./lib/auth";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Medicines from "./pages/Medicines";
 import Stock from "./pages/Stock";
 import Sales from "./pages/Sales";
-import Suppliers from "./pages/Suppliers";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +23,7 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes - cache garbage collection after 10 minutes
       refetchOnWindowFocus: false, // Don't refetch when window regains focus
       refetchOnReconnect: true, // Refetch when network reconnects
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       retry: (failureCount, error: any) => {
         // Don't retry on 4xx errors (client errors)
         if (error?.status >= 400 && error?.status < 500) {
@@ -38,7 +37,7 @@ const queryClient = new QueryClient({
     mutations: {
       retry: 1, // Retry mutations once on failure
       onError: (error) => {
-        console.error('Mutation error:', error);
+        console.error("Mutation error:", error);
       },
     },
   },
@@ -77,7 +76,6 @@ const App = () => {
                             <Route path="/medicines" element={<Medicines />} />
                             <Route path="/stock" element={<Stock />} />
                             <Route path="/sales" element={<Sales />} />
-                            <Route path="/suppliers" element={<Suppliers />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/settings" element={<Settings />} />
                           </Routes>

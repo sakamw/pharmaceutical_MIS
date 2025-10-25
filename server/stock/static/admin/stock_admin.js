@@ -1,0 +1,101 @@
+// Stock Admin JavaScript for batch number generation
+function generateBatchNumber() {
+    // Get the batch number input field
+    const batchField = document.querySelector('input[name="batch_number"]');
+
+    if (!batchField) {
+        alert('Batch number field not found!');
+        return;
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = '⏳ Generating...';
+    button.disabled = true;
+    button.style.opacity = '0.6';
+
+    // Make AJAX request to generate batch number
+    fetch('/admin/stock/stock/generate-batch/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.batch_number) {
+            // Fill the batch number field
+            batchField.value = data.batch_number;
+            batchField.focus();
+            batchField.select();
+
+            // Update button text
+            button.textContent = '✅ Generated!';
+            button.style.background = '#28a745';
+
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                if (batchField.value === data.batch_number) {
+                    button.textContent = '🔄 Regenerate';
+                    button.style.background = '#28a745';
+                } else {
+                    button.textContent = '🎲 Generate Batch Number';
+                    button.style.background = '#007bff';
+                }
+                button.disabled = false;
+                button.style.opacity = '1';
+            }, 2000);
+
+        } else if (data.error) {
+            alert('Error: ' + data.error);
+            resetButton();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to generate batch number. Please try again.');
+        resetButton();
+    });
+
+    function resetButton() {
+        button.textContent = originalText;
+        button.disabled = false;
+        button.style.opacity = '1';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+}
+
+// Auto-detect when batch number field changes and update button accordingly
+document.addEventListener('DOMContentLoaded', function() {
+    const batchField = document.querySelector('input[name="batch_number"]');
+    const generateButton = document.querySelector('button[onclick="generateBatchNumber()"]');
+
+    if (batchField && generateButton) {
+        batchField.addEventListener('input', function() {
+            if (this.value.trim() === '') {
+                generateButton.textContent = '🎲 Generate Batch Number';
+                generateButton.style.background = '#007bff';
+            } else {
+                generateButton.textContent = '🔄 Regenerate';
+                generateButton.style.background = '#28a745';
+            }
+        });
+    }
+});

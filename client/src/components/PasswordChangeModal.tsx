@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { changePassword } from "@/lib/auth";
+} from "../components/ui/dialog";
+import { changePassword } from "../lib/auth";
 import { toast } from "sonner";
 import { Loader2, Lock } from "lucide-react";
 
@@ -56,6 +56,7 @@ export function PasswordChangeModal({
       setConfirmPassword("");
       onSuccess();
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to change password");
     } finally {

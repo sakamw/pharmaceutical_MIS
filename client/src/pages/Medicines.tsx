@@ -1,19 +1,46 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { me, MeResponse } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { api } from "../lib/api";
+import { me, MeResponse } from "../lib/auth";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { Badge } from "../components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "../components/ui/textarea";
 
 const Medicines = () => {
   const queryClient = useQueryClient();
@@ -55,6 +82,8 @@ const Medicines = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-sale"] }); // Invalidate sales page query
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] }); // Invalidate stock page query
       toast.success("Medicine added successfully");
       setDialogOpen(false);
       resetForm();
@@ -70,6 +99,8 @@ const Medicines = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-sale"] }); // Invalidate sales page query
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] }); // Invalidate stock page query
       toast.success("Medicine updated successfully");
       setDialogOpen(false);
       resetForm();
@@ -85,6 +116,8 @@ const Medicines = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medicines"] });
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-sale"] }); // Invalidate sales page query
+      queryClient.invalidateQueries({ queryKey: ["medicines-for-stock"] }); // Invalidate stock page query
       toast.success("Medicine deleted successfully");
     },
     onError: (error) => {
@@ -148,130 +181,163 @@ const Medicines = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Medicines</h2>
-          <p className="text-muted-foreground">Manage your pharmacy inventory</p>
+          <p className="text-muted-foreground">
+            Manage your pharmacy inventory
+          </p>
         </div>
         {/* Show Add Medicine button only for admin users */}
-        {user?.role === "admin" && (
+        {user?.role === "ADMIN" && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="mr-2 h-4 w-4" /> Add Medicine
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingMedicine ? "Edit Medicine" : "Add New Medicine"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingMedicine
-                  ? "Update medicine information"
-                  : "Add a new medicine to your inventory"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Medicine Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingMedicine ? "Edit Medicine" : "Add New Medicine"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingMedicine
+                    ? "Update medicine information"
+                    : "Add a new medicine to your inventory"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Medicine Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Input
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData({ ...formData, category: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="manufacturer">Manufacturer</Label>
+                    <Input
+                      id="manufacturer"
+                      value={formData.manufacturer}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          manufacturer: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dosage_form">Dosage Form *</Label>
+                    <Select
+                      value={formData.dosage_form}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, dosage_form: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tablet">Tablet</SelectItem>
+                        <SelectItem value="capsule">Capsule</SelectItem>
+                        <SelectItem value="syrup">Syrup</SelectItem>
+                        <SelectItem value="injection">Injection</SelectItem>
+                        <SelectItem value="cream">Cream</SelectItem>
+                        <SelectItem value="drops">Drops</SelectItem>
+                        <SelectItem value="inhaler">Inhaler</SelectItem>
+                        <SelectItem value="powder">Powder</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit_price">Unit Price (Ksh) *</Label>
+                    <Input
+                      id="unit_price"
+                      type="number"
+                      step="0.01"
+                      value={formData.unit_price}
+                      onChange={(e) =>
+                        setFormData({ ...formData, unit_price: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reorder_level">Reorder Level *</Label>
+                    <Input
+                      id="reorder_level"
+                      type="number"
+                      value={formData.reorder_level}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          reorder_level: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="barcode">Barcode</Label>
+                    <Input
+                      id="barcode"
+                      value={formData.barcode}
+                      onChange={(e) =>
+                        setFormData({ ...formData, barcode: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    required
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="manufacturer">Manufacturer</Label>
-                  <Input
-                    id="manufacturer"
-                    value={formData.manufacturer}
-                    onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dosage_form">Dosage Form *</Label>
-                  <Select
-                    value={formData.dosage_form}
-                    onValueChange={(value) => setFormData({ ...formData, dosage_form: value })}
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tablet">Tablet</SelectItem>
-                      <SelectItem value="capsule">Capsule</SelectItem>
-                      <SelectItem value="syrup">Syrup</SelectItem>
-                      <SelectItem value="injection">Injection</SelectItem>
-                      <SelectItem value="cream">Cream</SelectItem>
-                      <SelectItem value="drops">Drops</SelectItem>
-                      <SelectItem value="inhaler">Inhaler</SelectItem>
-                      <SelectItem value="powder">Powder</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit_price">Unit Price ($) *</Label>
-                  <Input
-                    id="unit_price"
-                    type="number"
-                    step="0.01"
-                    value={formData.unit_price}
-                    onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reorder_level">Reorder Level *</Label>
-                  <Input
-                    id="reorder_level"
-                    type="number"
-                    value={formData.reorder_level}
-                    onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="barcode">Barcode</Label>
-                  <Input
-                    id="barcode"
-                    value={formData.barcode}
-                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {editingMedicine ? "Update" : "Add"} Medicine
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={
+                      createMutation.isPending || updateMutation.isPending
+                    }
+                  >
+                    {(createMutation.isPending || updateMutation.isPending) && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {editingMedicine ? "Update" : "Add"} Medicine
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -307,14 +373,16 @@ const Medicines = () => {
                     <TableHead>Unit Price</TableHead>
                     <TableHead>Reorder Level</TableHead>
                     <TableHead className="text-right">
-                      {user?.role === "admin" ? "Actions" : "Info"}
+                      {user?.role === "ADMIN" ? "Actions" : "Info"}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMedicines?.map((medicine) => (
                     <TableRow key={medicine.id}>
-                      <TableCell className="font-medium">{medicine.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {medicine.name}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{medicine.category}</Badge>
                       </TableCell>
@@ -322,12 +390,12 @@ const Medicines = () => {
                       <TableCell>
                         <Badge>{medicine.dosage_form}</Badge>
                       </TableCell>
-                      <TableCell>${medicine.unit_price}</TableCell>
+                      <TableCell>Ksh {medicine.unit_price}</TableCell>
                       <TableCell>{medicine.reorder_level}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {/* Show Edit and Delete buttons only for admin users */}
-                          {user?.role === "admin" && (
+                          {user?.role === "ADMIN" && (
                             <>
                               <Button
                                 variant="ghost"
@@ -340,7 +408,11 @@ const Medicines = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  if (confirm("Are you sure you want to delete this medicine?")) {
+                                  if (
+                                    confirm(
+                                      "Are you sure you want to delete this medicine?"
+                                    )
+                                  ) {
                                     deleteMutation.mutate(medicine.id);
                                   }
                                 }}

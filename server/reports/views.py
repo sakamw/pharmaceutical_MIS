@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from medicines.models import Medicine
 from stock.models import Stock
 from sales.models import Sale
-from suppliers.models import Supplier
 from django.db.models.functions import TruncMonth
 
 
@@ -34,9 +33,6 @@ def summary(request):
     last_30 = today - timedelta(days=30)
     monthly_sales = Sale.objects.filter(sale_date__gte=last_30).aggregate(total=Sum('quantity_sold'))['total'] or 0
 
-    # Supplier reliability: average rating
-    supplier_reliability = float(Supplier.objects.aggregate(avg=Sum('reliability_rating'))['avg'] or 0)
-
     # Top 5 fast-moving
     top_fast = (
         Sale.objects.filter(sale_date__gte=last_30)
@@ -51,7 +47,6 @@ def summary(request):
         'below_reorder': below_reorder,
         'total_stock_value': round(total_stock_value, 2),
         'monthly_sales_qty': monthly_sales,
-        'supplier_reliability_score': supplier_reliability,
         'top_fast_moving': list(top_fast),
     })
 
@@ -104,12 +99,6 @@ def stock_analysis(request):
     thirty_days = today + timedelta(days=30)
     ninety_days = today + timedelta(days=90)
 
-    # Stock value by category
-    category_stock = Medicine.objects.values('category').annotate(
-        total_value=Sum(F('stocks__quantity') * F('stocks__purchase_price')),
-        total_quantity=Sum('stocks__quantity')
-    ).exclude(category='')
-
     # Expiry analysis
     expiring_30 = Stock.objects.filter(
         expiry_date__lte=thirty_days,
@@ -136,7 +125,7 @@ def stock_analysis(request):
     ).filter(stock_value__gt=0).order_by('-stock_value')[:10]
 
     return Response({
-        'stock_by_category': list(category_stock),
+        'stock_by_category': [],  # Removed category analysis
         'expiring_30_days': {
             'quantity': expiring_30['total_quantity'] or 0,
             'value': float(expiring_30['total_value'] or 0)
@@ -147,37 +136,9 @@ def stock_analysis(request):
         },
         'top_medicines_by_value': [{
             'name': med.name,
-            'category': med.category,
             'stock_value': float(med.stock_value or 0),
             'total_quantity': med.total_quantity or 0
         } for med in top_by_value]
-    })
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def supplier_performance(request):
-    """Get supplier performance metrics"""
-    suppliers = Supplier.objects.annotate(
-        medicines_count=Count('medicine_supplier'),
-        avg_reliability=Avg('reliability_rating')
-    ).filter(medicines_count__gt=0)
-
-    # Stock value by supplier
-    supplier_stock = Medicine.objects.values('supplier__name').annotate(
-        total_stock_value=Sum(F('stocks__quantity') * F('stocks__purchase_price')),
-        medicines_count=Count('id')
-    ).exclude(supplier__isnull=True)
-
-    return Response({
-        'supplier_metrics': [{
-            'name': sup.name,
-            'medicines_count': sup.medicines_count,
-            'avg_reliability': float(sup.avg_reliability or 0),
-            'contact_info': sup.contact_info,
-            'address': sup.address
-        } for sup in suppliers],
-        'stock_by_supplier': list(supplier_stock)
     })
 
 
@@ -215,7 +176,6 @@ def inventory_turnover(request):
 
         turnover_data.append({
             'medicine_name': medicine.name,
-            'category': medicine.category,
             'avg_stock_level': round(avg_stock, 2),
             'total_sold_6months': total_sold,
             'daily_sales_rate': round(sales_rate, 2),

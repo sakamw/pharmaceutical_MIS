@@ -1,11 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-import { StatCard } from "@/components/StatCard";
-import { AlertCard } from "@/components/AlertCard";
-import { Package, DollarSign, AlertTriangle, TrendingUp, Pill, ShoppingCart } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { api } from "../lib/api";
+import { StatCard } from "../components/StatCard";
+import { AlertCard } from "../components/AlertCard";
+import {
+  Package,
+  DollarSign,
+  AlertTriangle,
+  TrendingUp,
+  Pill,
+  ShoppingCart,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const Dashboard = () => {
   const { data: summary } = useQuery({
@@ -27,9 +48,22 @@ const Dashboard = () => {
   }));
 
   const alerts = [
-    { show: belowReorder > 0, title: "Low Stock Alert", description: `${belowReorder} medicine(s) below reorder level` },
-    { show: expiringSoon > 0, title: "Expiring Soon", description: `${expiringSoon} batch(es) expiring within 30 days` },
-    { show: expired > 0, title: "Expired Stock", description: `${expired} batch(es) have expired`, destructive: true },
+    {
+      show: belowReorder > 0,
+      title: "Low Stock Alert",
+      description: `${belowReorder} medicine(s) below reorder level`,
+    },
+    {
+      show: expiringSoon > 0,
+      title: "Expiring Soon",
+      description: `${expiringSoon} batch(es) expiring within 30 days`,
+    },
+    {
+      show: expired > 0,
+      title: "Expired Stock",
+      description: `${expired} batch(es) have expired`,
+      destructive: true,
+    },
   ];
 
   return (
@@ -58,27 +92,25 @@ const Dashboard = () => {
           value={expiringSoon}
           icon={DollarSign}
         />
-        <StatCard
-          title="Expired"
-          value={expired}
-          icon={ShoppingCart}
-        />
+        <StatCard title="Expired" value={expired} icon={ShoppingCart} />
       </div>
 
       {/* Alerts Section */}
-      {alerts.some(a => a.show) && (
+      {alerts.some((a) => a.show) && (
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">Alerts & Notifications</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {alerts.map((a, idx) => a.show ? (
-              <AlertCard
-                key={idx}
-                title={a.title}
-                description={a.description}
-                icon={AlertTriangle}
-                variant={a.destructive ? "destructive" : undefined}
-              />
-            ) : null)}
+            {alerts.map((a, idx) =>
+              a.show ? (
+                <AlertCard
+                  key={idx}
+                  title={a.title}
+                  description={a.description}
+                  icon={AlertTriangle}
+                  variant={a.destructive ? "destructive" : undefined}
+                />
+              ) : null
+            )}
           </div>
         </div>
       )}

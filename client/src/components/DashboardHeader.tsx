@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "../components/ui/button";
+import { SidebarTrigger } from "../components/ui/sidebar";
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,9 +10,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { logout, MeResponse } from "@/lib/auth";
+} from "../components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { logout, MeResponse } from "../lib/auth";
 
 interface DashboardHeaderProps {
   user: MeResponse;
@@ -36,7 +36,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar>
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {(user?.email || user?.username || "?")?.charAt(0).toUpperCase()}
+                {(user?.email || user?.username || "?")
+                  ?.charAt(0)
+                  .toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -44,7 +46,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{user?.email || user?.username}</p>
+              <p className="text-sm font-medium">
+                {user?.email || user?.username}
+              </p>
               <p className="text-xs text-muted-foreground">Account</p>
             </div>
           </DropdownMenuLabel>
