@@ -1,6 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+function normalizeBaseUrl(input?: string): string {
+  let raw = (input || "").split(/[\s,]+/).filter(Boolean)[0] || "";
+  // Fix common typos like http// or https//
+  raw = raw.replace(/^http\/\/(?!\/)/, "http://").replace(/^https\/\/(?!\/)/, "https://");
+  // Remove trailing slashes
+  raw = raw.replace(/\/+$/, "");
+  return raw;
+}
+
+const API_BASE_URL = (() => {
+  const fromEnv = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+  if (fromEnv) return fromEnv;
+  if (typeof window !== "undefined" && window.location?.origin)
+    return window.location.origin;
+  return "http://localhost:8000";
+})();
 
 // Token storage helpers
 const ACCESS_TOKEN_KEY = "access_token";
