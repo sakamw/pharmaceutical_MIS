@@ -25,7 +25,21 @@ if not SECRET_KEY:
     SECRET_KEY = 'dev-secret-key-change-in-production-make-it-longer-for-security'
 
 DEBUG = os.getenv('DJANGO_DEBUG', '1' if IS_DEVELOPMENT else '0') == '1'
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Allowed hosts
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+
+# Add Render host(s) if provided by the platform
+render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME') or os.getenv('RENDER_EXTERNAL_URL')
+if render_host:
+    render_host = render_host.replace('https://', '').replace('http://', '').split('/')[0]
+    ALLOWED_HOSTS.append(render_host)
+
+# In production, allow Render subdomains by default
+if IS_PRODUCTION:
+    ALLOWED_HOSTS += ['.onrender.com']
+
+# Deduplicate while preserving order
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
 
 INSTALLED_APPS = [
     'jazzmin',
