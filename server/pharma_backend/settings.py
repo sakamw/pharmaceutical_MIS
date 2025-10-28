@@ -118,9 +118,19 @@ AUTH_USER_MODEL = 'core.User'
 
 # CORS Settings - Production vs Development
 if IS_PRODUCTION:
-    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-    if not CORS_ALLOWED_ORIGINS or CORS_ALLOWED_ORIGINS == ['']:
-        CORS_ALLOWED_ORIGINS = []
+    # Parse comma-separated list from env
+    CORS_ALLOWED_ORIGINS = [o.strip().rstrip('/') for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
+
+    # Auto-allow our own Render URL as an origin for same-origin SPAs
+    render_url = os.getenv('RENDER_EXTERNAL_URL') or os.getenv('RENDER_EXTERNAL_HOSTNAME')
+    if render_url:
+        render_origin = render_url.replace('https://', '').replace('http://', '').split('/')[0]
+        scheme = 'https'
+        CORS_ALLOWED_ORIGINS.append(f"{scheme}://{render_origin}")
+
+    # Also allow common frontend host patterns (e.g., Vercel subdomains)
+    CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\\.vercel\\.app$"]
+
     CORS_ALLOW_CREDENTIALS = True
 else:
     CORS_ALLOW_ALL_ORIGINS = True
