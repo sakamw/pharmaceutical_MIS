@@ -2,9 +2,9 @@
 import os
 import multiprocessing
 
-# Server socket
-bind = "unix:/tmp/gunicorn.sock"
-# bind = "0.0.0.0:8000"
+# Server socket (Render expects binding to 0.0.0.0:$PORT)
+port = os.environ.get("PORT", "8000")
+bind = f"0.0.0.0:{port}"
 
 # Worker processes
 workers = multiprocessing.cpu_count() * 2 + 1
@@ -19,10 +19,11 @@ max_requests_jitter = 50
 timeout = 30
 keepalive = 2
 
-# Logging
+# Logging (log to stdout/stderr so the platform captures logs)
 loglevel = "info"
-accesslog = "/var/log/gunicorn/access.log"
-errorlog = "/var/log/gunicorn/error.log"
+accesslog = "-"
+errorlog = "-"
+capture_output = True
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
 # Process naming
