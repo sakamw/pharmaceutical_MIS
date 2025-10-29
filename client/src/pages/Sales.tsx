@@ -58,8 +58,8 @@ const Sales = () => {
   const { data: sales, isLoading: salesLoading } = useQuery({
     queryKey: ["sales"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/sales/");
-      return data || [];
+      const data = await api.get<any>("/api/sales/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - sales data changes with transactions
     refetchInterval: false,
@@ -68,8 +68,8 @@ const Sales = () => {
   const { data: medicines } = useQuery({
     queryKey: ["medicines-for-sale"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/medicines/");
-      return data || [];
+      const data = await api.get<any>("/api/medicines/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
     refetchInterval: false,

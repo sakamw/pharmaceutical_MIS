@@ -90,8 +90,8 @@ const Stock = () => {
   const { data: stockBatches, isLoading } = useQuery({
     queryKey: ["stock-batches-full"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/stock/");
-      return data || [];
+      const data = await api.get<any>("/api/stock/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - stock data changes frequently but not instantly
     refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
@@ -100,8 +100,8 @@ const Stock = () => {
   const { data: medicines } = useQuery({
     queryKey: ["medicines-for-stock"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/medicines/");
-      return data || [];
+      const data = await api.get<any>("/api/medicines/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
     refetchInterval: false,
@@ -110,8 +110,8 @@ const Stock = () => {
   const { data: suppliers } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/suppliers/");
-      return data || [];
+      const data = await api.get<any>("/api/suppliers/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - suppliers change rarely
     refetchInterval: false,

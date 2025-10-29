@@ -69,8 +69,8 @@ const Medicines = () => {
   const { data: medicines, isLoading } = useQuery({
     queryKey: ["medicines"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/medicines/");
-      return data || [];
+      const data = await api.get<any>("/api/medicines/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - medicines don't change often
     refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
@@ -436,3 +436,441 @@ const Medicines = () => {
 };
 
 export default Medicines;
+
+                    <Label htmlFor="category">Category *</Label>
+
+                    <Input
+
+                      id="category"
+
+                      value={formData.category}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, category: e.target.value })
+
+                      }
+
+                      required
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="manufacturer">Manufacturer</Label>
+
+                    <Input
+
+                      id="manufacturer"
+
+                      value={formData.manufacturer}
+
+                      onChange={(e) =>
+
+                        setFormData({
+
+                          ...formData,
+
+                          manufacturer: e.target.value,
+
+                        })
+
+                      }
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="dosage_form">Dosage Form *</Label>
+
+                    <Select
+
+                      value={formData.dosage_form}
+
+                      onValueChange={(value) =>
+
+                        setFormData({ ...formData, dosage_form: value })
+
+                      }
+
+                    >
+
+                      <SelectTrigger>
+
+                        <SelectValue />
+
+                      </SelectTrigger>
+
+                      <SelectContent>
+
+                        <SelectItem value="tablet">Tablet</SelectItem>
+
+                        <SelectItem value="capsule">Capsule</SelectItem>
+
+                        <SelectItem value="syrup">Syrup</SelectItem>
+
+                        <SelectItem value="injection">Injection</SelectItem>
+
+                        <SelectItem value="cream">Cream</SelectItem>
+
+                        <SelectItem value="drops">Drops</SelectItem>
+
+                        <SelectItem value="inhaler">Inhaler</SelectItem>
+
+                        <SelectItem value="powder">Powder</SelectItem>
+
+                        <SelectItem value="other">Other</SelectItem>
+
+                      </SelectContent>
+
+                    </Select>
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="unit_price">Unit Price (Ksh) *</Label>
+
+                    <Input
+
+                      id="unit_price"
+
+                      type="number"
+
+                      step="0.01"
+
+                      value={formData.unit_price}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, unit_price: e.target.value })
+
+                      }
+
+                      required
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="reorder_level">Reorder Level *</Label>
+
+                    <Input
+
+                      id="reorder_level"
+
+                      type="number"
+
+                      value={formData.reorder_level}
+
+                      onChange={(e) =>
+
+                        setFormData({
+
+                          ...formData,
+
+                          reorder_level: e.target.value,
+
+                        })
+
+                      }
+
+                      required
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="barcode">Barcode</Label>
+
+                    <Input
+
+                      id="barcode"
+
+                      value={formData.barcode}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, barcode: e.target.value })
+
+                      }
+
+                    />
+
+                  </div>
+
+                </div>
+
+                <div className="space-y-2">
+
+                  <Label htmlFor="description">Description</Label>
+
+                  <Textarea
+
+                    id="description"
+
+                    value={formData.description}
+
+                    onChange={(e) =>
+
+                      setFormData({ ...formData, description: e.target.value })
+
+                    }
+
+                    rows={3}
+
+                  />
+
+                </div>
+
+                <DialogFooter>
+
+                  <Button
+
+                    type="button"
+
+                    variant="outline"
+
+                    onClick={() => setDialogOpen(false)}
+
+                  >
+
+                    Cancel
+
+                  </Button>
+
+                  <Button
+
+                    type="submit"
+
+                    disabled={
+
+                      createMutation.isPending || updateMutation.isPending
+
+                    }
+
+                  >
+
+                    {(createMutation.isPending || updateMutation.isPending) && (
+
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
+                    )}
+
+                    {editingMedicine ? "Update" : "Add"} Medicine
+
+                  </Button>
+
+                </DialogFooter>
+
+              </form>
+
+            </DialogContent>
+
+          </Dialog>
+
+        )}
+
+      </div>
+
+
+
+      <Card>
+
+        <CardHeader>
+
+          <CardTitle>All Medicines</CardTitle>
+
+          <CardDescription>
+
+            <div className="flex items-center gap-2">
+
+              <Search className="h-4 w-4 text-muted-foreground" />
+
+              <Input
+
+                placeholder="Search medicines..."
+
+                value={searchTerm}
+
+                onChange={(e) => setSearchTerm(e.target.value)}
+
+                className="max-w-sm"
+
+              />
+
+            </div>
+
+          </CardDescription>
+
+        </CardHeader>
+
+        <CardContent>
+
+          {isLoading ? (
+
+            <div className="flex justify-center py-8">
+
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+
+            </div>
+
+          ) : (
+
+            <div className="overflow-x-auto">
+
+              <Table>
+
+                <TableHeader>
+
+                  <TableRow>
+
+                    <TableHead>Name</TableHead>
+
+                    <TableHead>Category</TableHead>
+
+                    <TableHead>Manufacturer</TableHead>
+
+                    <TableHead>Dosage Form</TableHead>
+
+                    <TableHead>Unit Price</TableHead>
+
+                    <TableHead>Reorder Level</TableHead>
+
+                    <TableHead className="text-right">
+
+                      {user?.role === "ADMIN" ? "Actions" : "Info"}
+
+                    </TableHead>
+
+                  </TableRow>
+
+                </TableHeader>
+
+                <TableBody>
+
+                  {filteredMedicines?.map((medicine) => (
+
+                    <TableRow key={medicine.id}>
+
+                      <TableCell className="font-medium">
+
+                        {medicine.name}
+
+                      </TableCell>
+
+                      <TableCell>
+
+                        <Badge variant="outline">{medicine.category}</Badge>
+
+                      </TableCell>
+
+                      <TableCell>{medicine.manufacturer || "N/A"}</TableCell>
+
+                      <TableCell>
+
+                        <Badge>{medicine.dosage_form}</Badge>
+
+                      </TableCell>
+
+                      <TableCell>Ksh {medicine.unit_price}</TableCell>
+
+                      <TableCell>{medicine.reorder_level}</TableCell>
+
+                      <TableCell className="text-right">
+
+                        <div className="flex justify-end gap-2">
+
+                          {/* Show Edit and Delete buttons only for admin users */}
+
+                          {user?.role === "ADMIN" && (
+
+                            <>
+
+                              <Button
+
+                                variant="ghost"
+
+                                size="sm"
+
+                                onClick={() => handleEdit(medicine)}
+
+                              >
+
+                                <Edit className="h-4 w-4" />
+
+                              </Button>
+
+                              <Button
+
+                                variant="ghost"
+
+                                size="sm"
+
+                                onClick={() => {
+
+                                  if (
+
+                                    confirm(
+
+                                      "Are you sure you want to delete this medicine?"
+
+                                    )
+
+                                  ) {
+
+                                    deleteMutation.mutate(medicine.id);
+
+                                  }
+
+                                }}
+
+                              >
+
+                                <Trash2 className="h-4 w-4 text-destructive" />
+
+                              </Button>
+
+                            </>
+
+                          )}
+
+                        </div>
+
+                      </TableCell>
+
+                    </TableRow>
+
+                  ))}
+
+                </TableBody>
+
+              </Table>
+
+            </div>
+
+          )}
+
+        </CardContent>
+
+      </Card>
+
+    </div>
+
+  );
+
+};
+
+
+
+export default Medicines;
+
+

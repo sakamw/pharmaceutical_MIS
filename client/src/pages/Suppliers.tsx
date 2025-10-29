@@ -59,8 +59,8 @@ const Suppliers = () => {
   const { data: suppliers, isLoading } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
-      const data = await api.get<any[]>("/api/suppliers/");
-      return data || [];
+      const data = await api.get<any>("/api/suppliers/");
+      return Array.isArray(data) ? data : data?.results ?? data?.data ?? [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - suppliers don't change often
     refetchInterval: false, // Don't auto-refetch, rely on manual invalidation
@@ -397,3 +397,402 @@ const Suppliers = () => {
 };
 
 export default Suppliers;
+
+
+                    : "Add a new supplier to your network"}
+
+                </DialogDescription>
+
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+
+                <div className="grid gap-4 md:grid-cols-2">
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="name">Supplier Name *</Label>
+
+                    <Input
+
+                      id="name"
+
+                      value={formData.name}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, name: e.target.value })
+
+                      }
+
+                      required
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="contact_person">Contact Person</Label>
+
+                    <Input
+
+                      id="contact_person"
+
+                      value={formData.contact_person}
+
+                      onChange={(e) =>
+
+                        setFormData({
+
+                          ...formData,
+
+                          contact_person: e.target.value,
+
+                        })
+
+                      }
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="email">Email</Label>
+
+                    <Input
+
+                      id="email"
+
+                      type="email"
+
+                      value={formData.email}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, email: e.target.value })
+
+                      }
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="phone">Phone</Label>
+
+                    <Input
+
+                      id="phone"
+
+                      value={formData.phone}
+
+                      onChange={(e) =>
+
+                        setFormData({ ...formData, phone: e.target.value })
+
+                      }
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="performance_rating">
+
+                      Performance Rating (0-5)
+
+                    </Label>
+
+                    <Input
+
+                      id="reliability_rating"
+
+                      type="number"
+
+                      step="0.1"
+
+                      min="0"
+
+                      max="5"
+
+                      value={formData.reliability_rating}
+
+                      onChange={(e) =>
+
+                        setFormData({
+
+                          ...formData,
+
+                          reliability_rating: e.target.value,
+
+                        })
+
+                      }
+
+                    />
+
+                  </div>
+
+                </div>
+
+                <div className="space-y-2">
+
+                  <Label htmlFor="address">Address</Label>
+
+                  <Textarea
+
+                    id="address"
+
+                    value={formData.address}
+
+                    onChange={(e) =>
+
+                      setFormData({ ...formData, address: e.target.value })
+
+                    }
+
+                    rows={3}
+
+                  />
+
+                </div>
+
+                <DialogFooter>
+
+                  <Button
+
+                    type="button"
+
+                    variant="outline"
+
+                    onClick={() => setDialogOpen(false)}
+
+                  >
+
+                    Cancel
+
+                  </Button>
+
+                  <Button
+
+                    type="submit"
+
+                    disabled={
+
+                      createMutation.isPending || updateMutation.isPending
+
+                    }
+
+                  >
+
+                    {(createMutation.isPending || updateMutation.isPending) && (
+
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
+                    )}
+
+                    {editingSupplier ? "Update" : "Add"} Supplier
+
+                  </Button>
+
+                </DialogFooter>
+
+              </form>
+
+            </DialogContent>
+
+          </Dialog>
+
+        )}
+
+      </div>
+
+
+
+      <Card>
+
+        <CardHeader>
+
+          <CardTitle>All Suppliers</CardTitle>
+
+          <CardDescription>
+
+            <div className="flex items-center gap-2">
+
+              <Search className="h-4 w-4 text-muted-foreground" />
+
+              <Input
+
+                placeholder="Search suppliers..."
+
+                value={searchTerm}
+
+                onChange={(e) => setSearchTerm(e.target.value)}
+
+                className="max-w-sm"
+
+              />
+
+            </div>
+
+          </CardDescription>
+
+        </CardHeader>
+
+        <CardContent>
+
+          {isLoading ? (
+
+            <div className="flex justify-center py-8">
+
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+
+            </div>
+
+          ) : (
+
+            <div className="overflow-x-auto">
+
+              <Table>
+
+                <TableHeader>
+
+                  <TableRow>
+
+                    <TableHead>Name</TableHead>
+
+                    <TableHead>Contact Person</TableHead>
+
+                    <TableHead>Email</TableHead>
+
+                    <TableHead>Phone</TableHead>
+
+                    <TableHead>Performance</TableHead>
+
+                    <TableHead className="text-right">
+
+                      {user?.role === "ADMIN" ? "Actions" : "Info"}
+
+                    </TableHead>
+
+                  </TableRow>
+
+                </TableHeader>
+
+                <TableBody>
+
+                  {filteredSuppliers?.map((supplier) => (
+
+                    <TableRow key={supplier.id}>
+
+                      <TableCell className="font-medium">
+
+                        {supplier.name}
+
+                      </TableCell>
+
+                      <TableCell>{supplier.contact_person || "N/A"}</TableCell>
+
+                      <TableCell>{supplier.email || "N/A"}</TableCell>
+
+                      <TableCell>{supplier.phone || "N/A"}</TableCell>
+
+                      <TableCell>
+
+                        {renderRating(supplier.performance_rating)}
+
+                      </TableCell>
+
+                      <TableCell className="text-right">
+
+                        <div className="flex justify-end gap-2">
+
+                          {/* Show Edit and Delete buttons only for admin users */}
+
+                          {user?.role === "ADMIN" && (
+
+                            <>
+
+                              <Button
+
+                                variant="ghost"
+
+                                size="sm"
+
+                                onClick={() => handleEdit(supplier)}
+
+                              >
+
+                                <Edit className="h-4 w-4" />
+
+                              </Button>
+
+                              <Button
+
+                                variant="ghost"
+
+                                size="sm"
+
+                                onClick={() => {
+
+                                  if (
+
+                                    confirm(
+
+                                      "Are you sure you want to delete this supplier?"
+
+                                    )
+
+                                  ) {
+
+                                    deleteMutation.mutate(supplier.id);
+
+                                  }
+
+                                }}
+
+                              >
+
+                                <Trash2 className="h-4 w-4 text-destructive" />
+
+                              </Button>
+
+                            </>
+
+                          )}
+
+                        </div>
+
+                      </TableCell>
+
+                    </TableRow>
+
+                  ))}
+
+                </TableBody>
+
+              </Table>
+
+            </div>
+
+          )}
+
+        </CardContent>
+
+      </Card>
+
+    </div>
+
+  );
+
+};
+
+
+
+export default Suppliers;
+
+
